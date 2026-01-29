@@ -1,0 +1,385 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using MediCare.App.Models
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForestView Hospital - Empowering Lives Through Health</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Global + Core Styles -->
+    <link rel="stylesheet" href="~/css/globals.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <!-- Page-specific Styles -->
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="site-container">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2" />
+                    <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <span class="logo-text"><strong>ForestView</strong><br />Hospital</span>
+            </div>
+            <nav class="nav">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="doctors.html" class="nav-link">Doctors</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+            </nav>
+            <div class="auth-buttons">
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    var user = await UserManager.GetUserAsync(User);
+                    var roles = user is null ? Array.Empty<string>() : await UserManager.GetRolesAsync(user);
+
+                    string role =
+                    roles.Contains("AdminPlus") ? "AdminPlus" :
+                    roles.Contains("Admin") ? "Admin" :
+                    roles.Contains("Doctor") ? "Doctor" :
+                    roles.Contains("Patient") ? "Patient" : "User";
+
+                    string fullName = user?.FullName ?? user?.UserName ?? "User";
+
+                    string dashboardHref = role switch
+                    {
+                        "Doctor" => "/Doctors/Dashboard",
+                        "Patient" => "/Patient/Dashboard",
+                        "Admin" => "/Admin/Dashboard",
+                        "AdminPlus" => "/Admin/Dashboard",
+                        _ => "/"
+                    };
+
+                    string avatar = role switch
+                    {
+                        "Doctor" => "👨‍⚕️",
+                        "Admin" => "🧑‍💼",
+                        "AdminPlus" => "🧑‍💼",
+                        "Patient" => "👤",
+                        _ => "🙂"
+                    };
+
+                    <a href="@dashboardHref" class="user-profile" style="text-decoration:none;color:inherit;">
+                        <div class="user-avatar">@avatar</div>
+                        <div class="user-info">
+                            <p class="user-name">@fullName</p>
+                            <p class="user-role">@role</p>
+                        </div>
+                    </a>
+                }
+                else
+                {
+                    <a asp-area="Identity" asp-page="/Account/Register" class="register-btn">Register</a>
+                    <a asp-area="Identity" asp-page="/Account/Login" class="login-btn">Log in</a>
+                }
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="site-container">
+            <div class="hero-content">
+                <h1 class="hero-title">Empowering Lives Through Health</h1>
+                <p class="hero-subtitle">Navigating Health Together: Your Trusted Medical Resource</p>
+                <button class="cta-btn" onclick="window.location.href='@Url.Action("Index", "Appointment")'">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 5V15M5 10H15" stroke="white" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    Book an Appointment
+                </button>
+            </div>
+            <div class="hero-image"></div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="site-container">
+            <div class="stat-card large">
+                <h3>Your Bridge to Better Health<br />Start Your Journey Today</h3>
+                <p class="stat-desc">Medicine Meets Technology<br />Your Online Health Hub</p>
+                <div class="stat-buttons">
+                    <button class="stat-btn-primary">Our waiting process</button>
+                    <button class="stat-btn-secondary">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2" />
+                            <path d="M10 8L14 12L10 16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="stat-card combined">
+                <div class="combined-content">
+                    <div class="clients-section">
+                        <h3>Our Clients</h3>
+                        <div class="client-avatars">
+                            <div class="avatar"></div>
+                            <div class="avatar"></div>
+                            <div class="avatar"></div>
+                        </div>
+                        <button class="view-testimonial">
+                            View testimonial
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="stats-numbers">
+                        <div class="stat-item">
+                            <div class="stat-number">12K+</div>
+                            <p class="stat-label">Happy clients</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="progress-circle">
+                    <svg width="120" height="120" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="54" fill="none" stroke="#E0F7F4" stroke-width="8" />
+                        <circle cx="60" cy="60" r="54" fill="none" stroke="#00D9A5" stroke-width="8"
+                                stroke-dasharray="339.292" stroke-dashoffset="54"
+                                transform="rotate(-90 60 60)" stroke-linecap="round" />
+                        <text x="60" y="70" text-anchor="middle" font-size="28" font-weight="700" fill="#00A8A8">84%</text>
+                    </svg>
+                </div>
+                <p class="stat-label">Healing Success</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services-section">
+        <div class="site-container">
+            <div class="section-header">
+                <h2>Our Services</h2>
+                <h3>Comprehensive Medical Solutions</h3>
+            </div>
+
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                            <circle cx="24" cy="24" r="20" stroke="#00A8A8" stroke-width="2" />
+                            <path d="M24 14V34M14 24H34" stroke="#00A8A8" stroke-width="2" />
+                        </svg>
+                    </div>
+                    <h4>Cardiology</h4>
+                    <p>Navigating Health Together Your Trusted Medical Resource. Medicine Meets Technology Your Online Health Hub.</p>
+                </div>
+
+                <div class="service-card featured">
+                    <div class="service-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                            <circle cx="24" cy="24" r="20" stroke="#00A8A8" stroke-width="2" />
+                            <path d="M20 20H28M20 24H28M20 28H24" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <h4>Dentistry</h4>
+                    <p>Navigating Health Together Your Trusted Medical Resource. Medicine Meets Technology Your Online Health Hub.</p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                            <circle cx="24" cy="24" r="20" stroke="#00A8A8" stroke-width="2" />
+                            <path d="M18 24C18 24 20 20 24 20C28 20 30 24 30 24" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <h4>Neurology</h4>
+                    <p>Navigating Health Together Your Trusted Medical Resource. Medicine Meets Technology Your Online Health Hub.</p>
+                </div>
+            </div>
+
+            <div class="carousel-dots">
+                <button class="dot"></button>
+                <button class="dot active"></button>
+                <button class="dot"></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Steps Section -->
+    <section class="steps-section">
+        <div class="site-container">
+            <div class="section-header">
+                <h2>4 Easy steps And Get Your Solution</h2>
+                <p>Navigating Health Together: Your Trusted Medical Resource.Medicine Meets Technology Your Online Health Hub</p>
+            </div>
+
+            <div class="steps-grid">
+                <div class="step-card featured">
+                    <div class="step-icon">
+                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                            <circle cx="32" cy="24" r="8" stroke="currentColor" stroke-width="2" />
+                            <path d="M20 44C20 38 25 34 32 34C39 34 44 38 44 44" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <h4>Check Doctor Profile</h4>
+                    <p>Navigating Health Together Your Trusted Medical Resource. Medicine Meets Technology Your Online Health Hub.</p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-icon">
+                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                            <path d="M24 28H40M24 36H32" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                            <rect x="20" y="20" width="24" height="28" rx="2" stroke="currentColor" stroke-width="2" />
+                        </svg>
+                    </div>
+                    <h4>Request Consultation</h4>
+                    <p>Navigating Health Together Your Trusted Medical Resource. Medicine Meets Technology Your Online Health Hub.</p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-icon">
+                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                            <rect x="20" y="24" width="24" height="20" rx="2" stroke="currentColor" stroke-width="2" />
+                            <path d="M26 24V20M38 24V20M20 30H44" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <h4>Schedule Meeting</h4>
+                    <p>Navigating Health Together Your Trusted Medical Resource. Medicine Meets Technology Your Online Health Hub.</p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-icon">
+                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                            <path d="M28 36L32 40L40 28" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                            <circle cx="32" cy="32" r="12" stroke="currentColor" stroke-width="2" />
+                        </svg>
+                    </div>
+                    <h4>Get Your Solution</h4>
+                    <p>Navigating Health Together Your Trusted Medical Resource. Medicine Meets Technology Your Online Health Hub.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Doctors Section -->
+    <section class="doctors-section">
+        <div class="site-container">
+            <div class="section-header">
+                <h2>Meet Our Doctors</h2>
+                <h3>We're Dedicated To Your Well-Being</h3>
+
+                <div class="search-bar-container">
+                    <div class="search-bar">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="search-icon">
+                            <circle cx="9" cy="9" r="6" stroke="#00A8A8" stroke-width="2" />
+                            <path d="M13 13L17 17" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                        <input type="text" placeholder="Search doctors by name or specialty..." class="search-input">
+                        <button class="search-btn">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <circle cx="9" cy="9" r="6" stroke="white" stroke-width="2" />
+                                <path d="M13 13L17 17" stroke="white" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="doctors-carousel">
+                <button class="carousel-btn prev">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+
+                <div class="doctors-grid">
+                    <div class="doctor-card"><div class="doctor-image"></div><h4>Sabrina Caldwell</h4><p>Dentistry</p></div>
+                    <div class="doctor-card"><div class="doctor-image"></div><h4>Avery Berry</h4><p>Cardiology</p></div>
+                    <div class="doctor-card"><div class="doctor-image"></div><h4>Albert Simmons</h4><p>Neurology</p></div>
+                    <div class="doctor-card"><div class="doctor-image"></div><h4>Marvin Soto</h4><p>Surgent</p></div>
+                </div>
+
+                <button class="carousel-btn next">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter Section -->
+    <section class="newsletter-section">
+        <div class="site-container">
+            <h2>Get the Latest Health Updates</h2>
+            <div class="newsletter-form">
+                <input type="email" placeholder="Enter your email..." class="email-input">
+                <button class="subscribe-btn">Subscribe</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="site-container">
+            <div class="footer-content">
+                <div class="footer-col">
+                    <div class="footer-logo">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2" />
+                            <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                        <span><strong>ForestView</strong><br />Hospital</span>
+                    </div>
+                    <p>Navigating Health Together: Your Trusted Medical Resource. Medicine Meets Technology Your Online Health Hub.</p>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="doctors.html">Doctors</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Department</h4>
+                    <ul>
+                        <li><a href="#">Cardiology</a></li>
+                        <li><a href="#">Neurology</a></li>
+                        <li><a href="#">Urology</a></li>
+                        <li><a href="#">Radiology</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Location</h4>
+                    <p>10 Road Block-E, Banasree<br />Dhaka, Bangladesh</p>
+                    <p>0181234567</p>
+                    <a href="branches.html" class="footer-branches-link">View All Branches →</a>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>2024 Designer Hasan All rights reserved</p>
+                <div class="social-links">
+                    <!-- icons unchanged -->
+                    ...
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,383 @@
+﻿@{
+    Layout = "_DoctorLayout";
+    ViewData["Title"] = "Doctor Dashboard";
+}
+
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    @await Html.PartialAsync("_DoctorSidebar")
+
+    <!-- Main -->
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Doctor Dashboard</h1>
+                <p>Hospital Management Overview</p>
+            </div>
+            <div class="header-right">
+                <div class="user-profile">
+                    <div class="user-avatar">AD</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="section-content active" id="schedule-management-section">
+            <div class="schedule-calendar-container" id="schedule-section">
+                <!-- LEFT: MINI CALENDAR + DAY BOX -->
+                <div class="mini-calendar-sidebar">
+                    <div class="mini-calendar-header">
+                        <button class="mini-calendar-nav" id="miniPrevMonth">‹</button>
+                        <h3 id="miniCurrentMonth">—</h3>
+                        <button class="mini-calendar-nav" id="miniNextMonth">›</button>
+                    </div>
+
+                    <div class="mini-calendar-grid" id="miniCalendarGrid">
+                        <!-- JS will render headers + days -->
+                    </div>
+
+                    <div class="today-events-card">
+                        <h3 id="dayCardTitle">Duty Assigned (—)</h3>
+                        <div class="event-list" id="dutyAssignedList">
+                            <!-- JS fills -->
+                            <div class="no-duty-message" id="noDutyMsg" style="display:none;">No duty assigned for selected date.</div>
+                            <div class="no-duty-message" id="blockedMsg" style="display:none;">Blocked (approved leave).</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: MAIN CALENDAR -->
+                <div class="main-calendar-view">
+                    <div class="main-calendar-header">
+                        <button class="main-calendar-nav" id="mainPrevMonth">‹</button>
+                        <h2 id="mainCurrentMonth">—</h2>
+                        <button class="main-calendar-nav" id="mainNextMonth">›</button>
+
+                        <div class="view-toggle">
+                            <button class="toggle-btn active" id="monthViewBtn">Month</button>
+                            <button class="toggle-btn" id="weekViewBtn" disabled>Week</button>
+                        </div>
+                    </div>
+
+                    <div class="main-calendar-grid" id="mainCalendarGrid">
+                        <!-- JS renders weekdays header + days -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Duty detail modal -->
+        <div class="modal hidden" id="dutyDetailModal">
+            <div class="modal-content duty-detail-modal-content">
+                <div class="modal-header">
+                    <h2>Duty Details</h2>
+                    <button class="close-modal-btn" onclick="closeModal('dutyDetailModal')">❌</button>
+                </div>
+                <div class="modal-body">
+                    <h3 id="dutyDetailDoctorName">My Duty</h3>
+                    <div class="duty-detail-item">
+                        <p><strong>Duty Date:</strong> <span id="dutyDetailDate"></span></p>
+                    </div>
+                    <div class="duty-detail-item">
+                        <p><strong>Clinic Branch:</strong> <span id="dutyDetailBranch"></span></p>
+                    </div>
+                    <div class="duty-detail-item">
+                        <p><strong>Duty Time:</strong> <span id="dutyDetailTime"></span></p>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" onclick="closeModal('dutyDetailModal')">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+          console.log("[DoctorSchedule] script loaded");
+
+          // *** Build the correct base from your attribute route ***
+          const BASE = '@Url.Content("~/Doctors/DoctorSchedule")';
+          const MONTH_URL = `${BASE}/Month`;
+          const DAY_URL   = `${BASE}/Day`;
+
+          // ---------- helpers ----------
+        function ymd(dt) {
+            const y = dt.getFullYear();
+            const m = String(dt.getMonth() + 1).padStart(2, "0");
+            const d = String(dt.getDate()).padStart(2, "0");
+            return `${y}-${m}-${d}`;
+        }
+
+          const WEEKDAY_MINI = ["S","M","T","W","T","F","S"];
+          const WEEKDAY_MAIN = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+          const DOT_CLASSES = ["work","urgent","personal"];
+          const dotClass = (i)=> DOT_CLASSES[i % DOT_CLASSES.length];
+
+          async function fetchJson(url){
+            const res = await fetch(url, {
+              credentials: "same-origin",
+              headers: { "Accept": "application/json" }
+            });
+            if(!res.ok){
+              const body = await res.text().catch(()=> "");
+              console.error("[DoctorSchedule] HTTP error", res.status, res.statusText, url, body);
+              throw new Error(`${res.status} ${res.statusText}`);
+            }
+            return res.json();
+          }
+
+          function monthSkeleton(year, month){
+            // month: 1..12
+            const days = [];
+            const start = new Date(year, month-1, 1);
+            const end   = new Date(year, month, 1);
+            for(let d=new Date(start); d<end; d.setDate(d.getDate()+1)){
+              days.push({ date: ymd(d), isBlocked:false, duties: [] });
+            }
+            return {
+              year,
+              month,
+              monthName: start.toLocaleString(undefined, { month: "long" }),
+              days
+            };
+          }
+
+          async function getMonth(year, month){
+            const url = `${MONTH_URL}?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}`;
+            return fetchJson(url);
+          }
+          async function getDay(dateStr){
+            const url = `${DAY_URL}?date=${encodeURIComponent(dateStr)}`;
+            return fetchJson(url);
+          }
+
+          // ---------- state ----------
+          const state = {
+            year: new Date().getFullYear(),
+            month: new Date().getMonth() + 1,
+            selectedDate: ymd(new Date()),
+            monthData: null
+          };
+
+          // ---------- rendering ----------
+          function renderMiniCalendar(){
+            const grid = document.getElementById("miniCalendarGrid");
+            const monthLabel = document.getElementById("miniCurrentMonth");
+            grid.innerHTML = "";
+
+            WEEKDAY_MINI.forEach(ch=>{
+              const h = document.createElement("div");
+              h.className = "mini-calendar-day header";
+              h.textContent = ch;
+              grid.appendChild(h);
+            });
+
+            const y = state.monthData.year ?? state.monthData.Year;
+            const m = state.monthData.month ?? state.monthData.Month;
+            const firstDay = new Date(y, m-1, 1);
+            const startCell = new Date(firstDay); startCell.setDate(firstDay.getDate() - firstDay.getDay());
+
+            for(let i=0;i<42;i++){
+              const d = new Date(startCell); d.setDate(startCell.getDate()+i);
+              const dateStr = ymd(d);
+              const cell = document.createElement('div');
+              cell.className = 'mini-calendar-day';
+              if(d.getMonth() !== (m-1)) cell.classList.add("prev-month");
+              const dayObj = (state.monthData.days ?? state.monthData.Days).find(x => (x.date ?? x.Date) === dateStr);
+              if(dayObj && ((dayObj.duties ?? dayObj.Duties).length || (dayObj.isBlocked ?? dayObj.IsBlocked))) cell.classList.add("has-duty");
+              if(dateStr === ymd(new Date())) cell.classList.add("today");
+              if(dateStr === state.selectedDate) cell.classList.add("selected");
+              cell.dataset.date = dateStr;
+              cell.textContent = String(d.getDate());
+              cell.onclick = () => selectDate(dateStr);
+              grid.appendChild(cell);
+            }
+
+            const monthName = state.monthData.monthName ?? state.monthData.MonthName;
+            const yearTxt   = state.monthData.year ?? state.monthData.Year;
+            monthLabel.textContent = `${monthName} ${yearTxt}`;
+          }
+
+          function renderMainCalendar(){
+            const grid = document.getElementById("mainCalendarGrid");
+            const monthLabel = document.getElementById("mainCurrentMonth");
+            grid.innerHTML = "";
+
+            WEEKDAY_MAIN.forEach(name=>{
+              const h = document.createElement("div");
+              h.className = "main-calendar-day header";
+              h.textContent = name;
+              grid.appendChild(h);
+            });
+
+            const y = state.monthData.year ?? state.monthData.Year;
+            const m = state.monthData.month ?? state.monthData.Month;
+            const firstDay = new Date(y, m-1, 1);
+            const startCell = new Date(firstDay); startCell.setDate(firstDay.getDate() - firstDay.getDay());
+
+            for(let i=0;i<42;i++){
+              const d = new Date(startCell); d.setDate(startCell.getDate()+i);
+              const dateStr = ymd(d);
+
+              const day = document.createElement("div");
+              day.className = "main-calendar-day";
+              if(d.getMonth() !== (m-1)) day.classList.add("next-month");
+              if(dateStr === ymd(new Date())) day.classList.add("today");
+              if(dateStr === state.selectedDate) day.classList.add("selected");
+              day.dataset.date = dateStr;
+
+              const num = document.createElement("span");
+              num.className = "date-number";
+              num.textContent = String(d.getDate());
+              day.appendChild(num);
+
+              const datum = (state.monthData.days ?? state.monthData.Days).find(x => (x.date ?? x.Date) === dateStr);
+              if(datum && ((datum.duties ?? datum.Duties).length || (datum.isBlocked ?? datum.IsBlocked))){
+                day.classList.add("has-duty");
+                const indicator = document.createElement("span");
+                const duties = datum.duties ?? datum.Duties;
+                const blocked = datum.isBlocked ?? datum.IsBlocked;
+
+                if(blocked && !duties.length){
+                  indicator.className = "duty-indicator";
+                  indicator.textContent = "Blocked";
+                  day.appendChild(indicator);
+                } else if(duties.length){
+                  indicator.className = "duty-indicator";
+                  indicator.textContent = `${duties.length} Dut${duties.length>1?'ies':'y'}`;
+                  day.appendChild(indicator);
+
+                  const dots = document.createElement("div");
+                  dots.className = "duty-icon-container";
+                  duties.forEach((duty, idx)=>{
+                    const dot = document.createElement("div");
+                    dot.className = "duty-icon " + dotClass(idx);
+                    dot.title = `${(duty.branchName ?? duty.BranchName) ?? ""} (${(duty.start ?? duty.Start)}-${(duty.end ?? duty.End)})`;
+                    dots.appendChild(dot);
+                  });
+                  day.appendChild(dots);
+                }
+              }
+
+              day.onclick = () => selectDate(dateStr);
+              grid.appendChild(day);
+            }
+
+            const monthName = state.monthData.monthName ?? state.monthData.MonthName;
+            const yearTxt   = state.monthData.year ?? state.monthData.Year;
+            monthLabel.textContent = `${monthName} ${yearTxt}`;
+          }
+
+          function renderDayBox(dayData){
+            const title = document.getElementById("dayCardTitle");
+            const list = document.getElementById("dutyAssignedList");
+            const noDuty = document.getElementById("noDutyMsg");
+            const blocked = document.getElementById("blockedMsg");
+
+            title.textContent = `Duty Assigned (${new Date(dayData.date ?? dayData.Date).toLocaleDateString()})`;
+            list.querySelectorAll(".event-item").forEach(n => n.remove());
+
+            const isBlocked = dayData.isBlocked ?? dayData.IsBlocked;
+            const duties = dayData.duties ?? dayData.Duties;
+
+            blocked.style.display = isBlocked ? "block" : "none";
+            if(!duties || duties.length === 0){
+              noDuty.style.display = isBlocked ? "none" : "block";
+              return;
+            }
+            noDuty.style.display = "none";
+
+            duties.forEach((duty, idx)=>{
+              const item = document.createElement("div");
+              item.className = `event-item ${dotClass(idx)}`;
+              item.innerHTML = `
+                <span class="event-dot ${dotClass(idx)}"></span>
+                <span class="event-time">${duty.start ?? duty.Start}</span>
+                <span>${duty.branchName ?? duty.BranchName}</span>`;
+              item.onclick = () => {
+                document.getElementById("dutyDetailDate").textContent  = new Date(dayData.date ?? dayData.Date).toLocaleDateString();
+                document.getElementById("dutyDetailBranch").textContent = duty.branchName ?? duty.BranchName;
+                document.getElementById("dutyDetailTime").textContent   = `${duty.start ?? duty.Start} - ${duty.end ?? duty.End}`;
+                document.getElementById("dutyDetailModal").classList.remove("hidden");
+              };
+              list.appendChild(item);
+            });
+          }
+
+          // ---------- interaction ----------
+          async function loadMonth(year, month){
+            try{
+              const data = await getMonth(year, month);
+              console.log("[DoctorSchedule] month data OK", data);
+              state.monthData = data;
+            }catch(err){
+              console.warn("[DoctorSchedule] month fetch failed, using skeleton", err);
+              state.monthData = monthSkeleton(year, month); // still render a grid
+            }
+            renderMiniCalendar();
+            renderMainCalendar();
+
+            const dayInMonth = (state.monthData.days ?? state.monthData.Days).find(d => (d.date ?? d.Date) === state.selectedDate);
+            if(!dayInMonth){
+              const pick = (state.monthData.days ?? state.monthData.Days)[0];
+              state.selectedDate = pick.date ?? pick.Date;
+            }
+            await loadDay(state.selectedDate);
+          }
+
+          async function loadDay(dateStr){
+            try{
+              state.selectedDate = dateStr;
+              document.querySelectorAll(".mini-calendar-day.selected, .main-calendar-day.selected").forEach(n=>n.classList.remove("selected"));
+              const mini = document.querySelector(`.mini-calendar-day[data-date="${dateStr}"]`);
+              if(mini) mini.classList.add("selected");
+              const main = document.querySelector(`.main-calendar-day[data-date="${dateStr}"]`);
+              if(main) main.classList.add("selected");
+
+              const day = await getDay(dateStr);
+              console.log("[DoctorSchedule] day data", day);
+              renderDayBox(day);
+            }catch(err){
+              console.error("[DoctorSchedule] day fetch failed", err);
+              // show empty state
+              renderDayBox({ Date: dateStr, IsBlocked:false, Duties:[] });
+            }
+          }
+
+          async function selectDate(dateStr){ await loadDay(dateStr); }
+
+          // nav
+          document.getElementById("miniPrevMonth").onclick =
+          document.getElementById("mainPrevMonth").onclick = async ()=>{
+            state.month--; if(state.month===0){ state.month=12; state.year--; }
+            await loadMonth(state.year, state.month);
+          };
+          document.getElementById("miniNextMonth").onclick =
+          document.getElementById("mainNextMonth").onclick = async ()=>{
+            state.month++; if(state.month===13){ state.month=1; state.year++; }
+            await loadMonth(state.year, state.month);
+          };
+
+          // initial
+          await loadMonth(state.year, state.month);
+        });
+
+        function openModal(id) {
+          const modal = document.getElementById(id);
+          if (modal) modal.classList.remove("hidden");
+        }
+
+        function closeModal(id) {
+          const modal = document.getElementById(id);
+          if (modal) modal.classList.add("hidden");
+        }
+
+
+
+    </script>
+}
+
+
+

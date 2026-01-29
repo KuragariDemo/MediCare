@@ -1,0 +1,234 @@
+﻿@model IEnumerable<MediCare.App.Models.AdminProfile>
+@using MediCare.App.Models
+@{
+    ViewData["Title"] = "Admin Account Management";
+    Layout = "_AdminLayout";
+}
+
+@functions {
+    public string AntiXsrf()
+    {
+        var antiForgery = Context.RequestServices.GetService(typeof(Microsoft.AspNetCore.Antiforgery.IAntiforgery)) as Microsoft.AspNetCore.Antiforgery.IAntiforgery;
+        return antiForgery!.GetAndStoreTokens(Context).RequestToken!;
+    }
+}
+<meta name="request-verification-token" content="@AntiXsrf()" />
+
+
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    @await Html.PartialAsync("_AdminSidebar")
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Admin Dashboard</h1>
+                <p>Hospital Management Overview</p>
+            </div>
+            <div class="header-right">
+                <button class="notification-btn">
+                    <span>🔔</span>
+                    <span class="notification-badge">8</span>
+                </button>
+                <div class="user-profile">
+                    <div class="user-avatar">AD</div>
+                    <div class="user-info">
+                        <p class="user-name">Admin User</p>
+                        <p class="user-role">System Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+                <div class="panel-header">
+                    <h2>Admin Account Management</h2>
+                    <button class="btn btn-primary" type="button" onclick="openModal('create')">
+                        <span>➕</span>
+                        <span>Create New Admin Account</span>
+                    </button>
+                </div>
+
+                <div class="search-container">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="adminSearch" class="form-input" placeholder="Search accounts by name or email...">
+                </div>
+
+                <div class="admin-account-list" id="adminAccountList">
+                    @if (!(Model?.Any() ?? false))
+                    {
+                        <div class="empty-state" id="emptyAccountState" style="text-align:center;padding:20px;border:2px dashed var(--color-border-light);border-radius:16px;background:white;">
+                            <div class="empty-state-icon" style="font-size:38px;">👥</div>
+                            <h3>No Admins Found</h3>
+                            <p>Click 'Create New Admin Account' to add your first user.</p>
+                        </div>
+                    }
+                    else
+                    {
+                @foreach (var a in Model!)
+                {
+                    var roleText = a.Level == AdminLevel.AdminPlus ? "Admin Plus" : "Admin";
+                    var roleClass = a.Level == AdminLevel.AdminPlus ? "role-adminplus" : "role-admin";
+
+                    // get current logged-in user id so we can hide Delete for self
+                    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                    <div class="admin-account-item"
+                         data-name="@a.User.FullName"
+                         data-email="@a.User.Email">
+
+                        <div class="admin-info">
+                            <div class="admin-info-header">
+                                <h4>@(a.User.FullName ?? "(no name)")</h4>
+                                <span class="admin-role-badge @(a.Level == AdminLevel.AdminPlus ? "role-adminplus" : "role-admin")">
+                                    @(a.Level == AdminLevel.AdminPlus ? "Admin Plus" : "Admin")
+                                </span>
+                            </div>
+                            <p>
+                                @a.User.Email |
+                                Created: @a.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+                            </p>
+                        </div>
+
+                        <div class="admin-actions" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;align-items:flex-start;">
+
+                            <!-- Change level -->
+                            <form asp-action="SetAdminLevel"
+                                  asp-controller="Accounts"
+                                  method="post"
+                                  style="display:flex;gap:6px;align-items:flex-start;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@a.Id" />
+                                <select name="level">
+                                    <option value="@AdminLevel.Admin" selected="@(a.Level == AdminLevel.Admin)">Admin</option>
+                                    <option value="@AdminLevel.AdminPlus" selected="@(a.Level == AdminLevel.AdminPlus)">AdminPlus</option>
+                                </select>
+                                <button class="btn" type="submit">Update</button>
+                            </form>
+
+                            @* Delete button (only show if this is NOT me) *@
+                            @if (a.UserId != currentUserId)
+                            {
+                                <form asp-action="DeleteAdmin"
+                                      asp-controller="Accounts"
+                                      method="post"
+                                      onsubmit="return confirm('Are you sure you want to delete this admin account? This cannot be undone.');"
+                                      style="display:flex;align-items:flex-start;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@a.Id" />
+                                    <button type="submit"
+                                            class="btn btn-danger"
+                                            style="background:#ff4d4d;border:none;color:#fff;font-weight:600;padding:6px 12px;border-radius:8px;">
+                                        Delete
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                }
+                    }
+                </div>
+        </main>
+    </div>
+</div>
+<!-- Modal (Create / future Edit reuse) -->
+<div class="modal" id="adminModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Create Admin Account</h3>
+            <button class="close-modal-btn" onclick="closeModal('adminModal')">❌</button>
+        </div>
+
+        <form id="adminForm" asp-action="CreateAdmin" asp-controller="Accounts" method="post">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" id="modalMode" value="create" />
+
+            <div class="form-group" id="nameGroup">
+                <label for="adminName">Admin Name</label>
+                <input type="text" id="adminName" name="fullName" class="form-input" placeholder="Full Name" required />
+            </div>
+
+            <div class="form-group">
+                <label for="adminEmail">Email Address</label>
+                <input type="email" id="adminEmail" name="email" class="form-input" placeholder="Email Address" required />
+            </div>
+
+            <div class="form-group">
+                <label for="adminPassword">Password</label>
+                <input type="password" id="adminPassword" name="password" class="form-input" placeholder="Password (Min 8 characters)" minlength="8" required />
+            </div>
+
+            <div class="form-group">
+                <label>Admin Level</label>
+                <div class="role-selection">
+                    <label class="role-option">
+                        <input type="radio" name="level" value="@AdminLevel.AdminPlus" />
+                        <span class="role-label">⭐ Admin Plus</span>
+                    </label>
+                    <label class="role-option">
+                        <input type="radio" name="level" value="@AdminLevel.Admin" checked />
+                        <span class="role-label">👤 Admin</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('adminModal')">
+                    <span>↩️</span>
+                    <span>Cancel</span>
+                </button>
+                <button type="submit" class="btn btn-primary" id="saveButton">
+                    <span>✅</span>
+                    <span>Create Account</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Simple search filter (client-side over rendered HTML)
+        const searchInput = document.getElementById('adminSearch');
+        const list = document.getElementById('adminAccountList');
+
+        function filterList() {
+            const q = (searchInput.value || '').toLowerCase();
+            const items = list.querySelectorAll('.admin-account-item');
+            let shown = 0;
+            items.forEach(it => {
+                const name = (it.getAttribute('data-name') || '').toLowerCase();
+                const email = (it.getAttribute('data-email') || '').toLowerCase();
+                const match = !q || name.includes(q) || email.includes(q);
+                it.style.display = match ? '' : 'none';
+                if (match) shown++;
+            });
+            const emptyState = document.getElementById('emptyAccountState');
+            if (!items.length || shown === 0) {
+                if (emptyState) emptyState.style.display = 'block';
+            } else if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+        }
+
+        searchInput?.addEventListener('keyup', filterList);
+
+        // Modal handlers
+        const openModal = (mode) => {
+            document.getElementById('modalMode').value = mode;
+            document.getElementById('adminForm').reset();
+            document.getElementById('modalTitle').textContent = 'Create Admin Account';
+            document.getElementById('adminModal').classList.add('visible');
+        };
+        const closeModal = (id) => {
+            document.getElementById(id).classList.remove('visible');
+        };
+
+        // Close modal by clicking outside
+        document.getElementById('adminModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'adminModal') closeModal('adminModal');
+        });
+    </script>
+}

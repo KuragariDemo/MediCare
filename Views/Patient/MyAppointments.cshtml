@@ -1,0 +1,397 @@
+﻿@model MediCare.App.ViewModels.Patient.PatientMyAppointmentsPageVM
+@using System.Globalization
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+@functions {
+    string AntiXsrf() => Xsrf.GetAndStoreTokens(Context).RequestToken!;
+}
+
+@{
+    ViewData["Title"] = "My Appointments";
+    Layout = "_Layout"; // <-- or your Patient Dashboard layout
+
+    string fmtDate(DateTime dt) => dt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    string fmtTime(DateTime dt) => dt.ToString("hh:mm tt", CultureInfo.InvariantCulture);
+}
+
+<!-- Anti-forgery token for JS -->
+<meta name="request-verification-token" content="@AntiXsrf()" />
+
+<div class="dashboard-container">
+    <partial name="_PatientSidebar" />
+
+    <main class="dashboard-main">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Welcome, John Doe!</h1>
+                <p>Manage your health records and appointments</p>
+            </div>
+            <div class="header-right">
+                <button class="notification-btn">
+                    <span>🔔</span>
+                    <span class="notification-badge">3</span>
+                </button>
+                <div class="user-profile">
+                    <div class="user-avatar">JD</div>
+                    <div class="user-info">
+                        <p class="user-name">John Doe</p>
+                        <p class="user-role">Patient ID: #12345</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="myappointment-container">
+            <div class="myappointment-header">
+                <h2>🗓️ My Booked Appointments</h2>
+            </div>
+
+            <div class="myappointment-search-area">
+                <div class="myappointment-search-input-container">
+                    <input type="text"
+                           class="myappointment-search-input"
+                           id="myappointmentSearchInput"
+                           placeholder="Search by Doctor, Date, or Branch...">
+                </div>
+            </div>
+
+            <div class="myappointment-table-responsive">
+                <table class="myappointment-table" id="myappointmentAppointmentsTable">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Doctor Name</th>
+                            <th>Specialty</th>
+                            <th>Branch</th>
+                            <th>Branch Location</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointmentsBody">
+                        @if (!Model.Items.Any())
+                        {
+                            <tr>
+                                <td colspan="6" style="text-align:center;color:var(--m-text-muted);padding:20px;">
+                                    You have no booked appointments.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var row in Model.Items)
+                            {
+                                <tr data-appointment-id="@row.AppointmentId"
+                                    data-doctor-id="@row.DoctorId"
+                                    data-doctor="@row.DoctorName">
+                                    <td>
+                                        @fmtDate(row.LocalDateTimeStart)
+                                        <br />
+                                        @fmtTime(row.LocalDateTimeStart)
+                                    </td>
+                                    <td>@row.DoctorName</td>
+                                    <td>@row.DoctorSpecialty</td>
+                                    <td>@row.BranchName</td>
+                                    <td>@(row.BranchAddress ?? "-")</td>
+                                    <td class="myappointment-actions-cell">
+                                        <button class="m-btn m-btn-reschedule" data-action="reschedule">Reschedule</button>
+                                        <button class="m-btn m-btn-cancel" data-action="cancel">Cancel</button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- RESCHEDULE MODAL -->
+<div id="rescheduleModal" class="myappointment-modal">
+    <div class="myappointment-modal-content">
+        <div class="myappointment-modal-header">
+            <h4>Reschedule Appointment</h4>
+            <button class="myappointment-close-btn">&times;</button>
+        </div>
+
+        <p>
+            You are rescheduling the appointment with
+            <strong id="modalDoctorName"></strong>.
+        </p>
+
+        <div class="myappointment-schedule-section">
+            <div class="myappointment-schedule-header">
+                Doctor's Available Duties:
+            </div>
+
+            <div class="myappointment-table-responsive">
+                <table class="myappointment-duty-table" id="dutyTable">
+                    <thead>
+                        <tr>
+                            <th>Duty Date</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Branch</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="4" style="text-align:center;color:var(--m-text-muted);">Loading schedule...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <form id="rescheduleForm">
+            <input type="hidden" id="rescheduleApptId" name="apptId" />
+            <input type="hidden" id="selectedDutyId" name="dutyId" />
+
+            <div class="myappointment-form-control">
+                <label>Selected Duty Slot:</label>
+                <p id="selectedDutyDisplay" style="color: var(--m-primary-dark); font-size:16px; font-weight:700;">
+                    No duty selected. Click a row above.
+                </p>
+            </div>
+
+            <div class="myappointment-form-actions">
+                <button type="button" class="m-btn m-btn-cancel" data-close="rescheduleModal">Cancel</button>
+                <button type="submit"
+                        class="m-btn m-btn-reschedule"
+                        id="confirmRescheduleBtn"
+                        disabled>
+                    Confirm Reschedule
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- CANCEL MODAL -->
+<div id="cancelModal" class="myappointment-modal">
+    <div class="myappointment-modal-content">
+        <div class="myappointment-modal-header">
+            <h4>Confirm Cancellation</h4>
+            <button class="myappointment-close-btn">&times;</button>
+        </div>
+
+        <p>
+            You are about to cancel your appointment with
+            <strong id="cancelDoctorName"></strong>.
+            This action <strong>cannot be undone</strong>.
+        </p>
+        <p style="color: var(--m-danger); font-weight: 600;">Are you sure you want to proceed?</p>
+
+        <div class="myappointment-form-actions">
+            <button type="button" class="m-btn m-btn-reschedule" data-close="cancelModal">Go Back</button>
+            <button type="button" class="m-btn m-btn-cancel" id="confirmCancelBtn">
+                Yes, Cancel Booking
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // --- helpers ---
+        function getXsrf() {
+            const meta = document.querySelector('meta[name="request-verification-token"]');
+            return meta ? meta.getAttribute("content") : "";
+        }
+
+        function openModal(id){
+            document.getElementById(id).style.display='flex';
+        }
+        function closeModal(id){
+            document.getElementById(id).style.display='none';
+        }
+
+        // live search on table
+        document.addEventListener("input", e => {
+            if(e.target.id === "myappointmentSearchInput"){
+                const q = e.target.value.toLowerCase();
+                document.querySelectorAll("#appointmentsBody tr").forEach(tr=>{
+                    const text = tr.innerText.toLowerCase();
+                    tr.style.display = text.includes(q) ? "" : "none";
+                });
+            }
+        });
+
+        // close buttons in modals + overlay click
+        document.addEventListener("click", e => {
+            if(e.target.classList.contains("myappointment-close-btn")){
+                const modal = e.target.closest(".myappointment-modal");
+                if(modal) closeModal(modal.id);
+            }
+            if(e.target.matches("[data-close]")){
+                closeModal(e.target.getAttribute("data-close"));
+            }
+            if(e.target.classList.contains("myappointment-modal")){
+                closeModal(e.target.id);
+            }
+        });
+
+        // table button events
+        let currentApptId = null;
+        let currentDoctorId = null;
+        let currentDoctorName = null;
+        let selectedDutyId = null;
+
+        document.getElementById("myappointmentAppointmentsTable")
+            .addEventListener("click", async (evt)=>{
+                const btn = evt.target;
+                if(!btn.hasAttribute("data-action")) return;
+
+                const tr = btn.closest("tr");
+                currentApptId     = tr.getAttribute("data-appointment-id");
+                currentDoctorId   = tr.getAttribute("data-doctor-id");
+                currentDoctorName = tr.getAttribute("data-doctor");
+
+                if(btn.getAttribute("data-action")==="reschedule"){
+                    // fill modal header
+                    document.getElementById("modalDoctorName").textContent = currentDoctorName;
+                    document.getElementById("rescheduleApptId").value = currentApptId;
+                    document.getElementById("selectedDutyDisplay").textContent =
+                        "No duty selected. Click a row above.";
+                    document.getElementById("confirmRescheduleBtn").disabled = true;
+                    selectedDutyId = null;
+
+                    // load duties from server
+                    await loadDuties(currentDoctorId);
+
+                    openModal("rescheduleModal");
+                }
+                else if(btn.getAttribute("data-action")==="cancel"){
+                    document.getElementById("cancelDoctorName").textContent = currentDoctorName;
+                    openModal("cancelModal");
+                }
+        });
+
+        async function loadDuties(doctorId){
+            const tbody = document.querySelector("#dutyTable tbody");
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--m-text-muted);">Loading...</td></tr>`;
+
+            try{
+                const resp = await fetch(`@Url.Action("Duties", "PatientAppointments", new { area = "" })?doctorId=${doctorId}`, {
+                    credentials: "same-origin",
+                    headers:{ "Accept":"application/json" }
+                });
+                if(!resp.ok){
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--m-danger);">Error loading duties</td></tr>`;
+                    return;
+                }
+                const data = await resp.json(); // [{id,dutyDate,start,end,branch},...]
+
+                if(!data.length){
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--m-text-muted);">No duties found for this doctor.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = "";
+                data.forEach(d=>{
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${d.dutyDate}</td>
+                        <td>${d.start}</td>
+                        <td>${d.end}</td>
+                        <td>${d.branch}</td>
+                    `;
+                    tr.dataset.dutyId = d.id;
+                    tr.dataset.summary = `${d.dutyDate}, ${d.start} - ${d.end} at ${d.branch}`;
+
+                    tr.addEventListener("click", ()=>{
+                        // clear previous
+                        tbody.querySelectorAll("tr").forEach(r=>r.classList.remove("selected-duty"));
+                        tr.classList.add("selected-duty");
+
+                        selectedDutyId = tr.dataset.dutyId;
+                        document.getElementById("selectedDutyId").value = selectedDutyId;
+                        document.getElementById("selectedDutyDisplay").textContent = tr.dataset.summary;
+                        document.getElementById("confirmRescheduleBtn").disabled = false;
+                    });
+
+                    tbody.appendChild(tr);
+                });
+
+            }catch(err){
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--m-danger);">Failed to load.</td></tr>`;
+            }
+        }
+
+        // submit RESCHEDULE
+        document.getElementById("rescheduleForm").addEventListener("submit", async (e)=>{
+            e.preventDefault();
+            if(!selectedDutyId){
+                alert("Please select an available duty slot.");
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append("appointmentId", currentApptId);
+            fd.append("dutyId", selectedDutyId);
+
+            const resp = await fetch(`@Url.Action("Reschedule", "PatientAppointments", new { area = "" })`,{
+                method:"POST",
+                credentials:"same-origin",
+                headers:{
+                    "RequestVerificationToken": getXsrf()
+                },
+                body: fd
+            });
+            const data = await resp.json();
+
+            if(!data.ok){
+                alert("Error: " + (data.message || "Cannot reschedule."));
+                return;
+            }
+
+            // UI update: change row's date/time/branch in table
+            // We already stored row ref:
+            const row = document.querySelector(`[data-appointment-id="${currentApptId}"]`);
+            if(row){
+                const summary = document.getElementById("selectedDutyDisplay").textContent;
+    
+                const parts = summary.split(" at ");
+                const branchName = parts[1] || "";
+                const dateAndTime = parts[0] || "";
+                const datePart = dateAndTime.split(",")[0] || "";
+                const timePart = dateAndTime.split(",")[1] ? dateAndTime.split(",")[1].trim() : "";
+
+                // update <td> for date/time
+                row.children[0].innerHTML = `${datePart}<br>${timePart}`;
+                // update branch col
+                row.children[3].textContent = branchName;
+            }
+
+            closeModal("rescheduleModal");
+            alert("Rescheduled successfully.");
+        });
+
+        // submit CANCEL
+        document.getElementById("confirmCancelBtn").addEventListener("click", async ()=>{
+            const fd = new FormData();
+            fd.append("appointmentId", currentApptId);
+
+            const resp = await fetch(`@Url.Action("Cancel", "PatientAppointments", new { area = "" })`,{
+                method:"POST",
+                credentials:"same-origin",
+                headers:{
+                    "RequestVerificationToken": getXsrf()
+                },
+                body: fd
+            });
+            const data = await resp.json();
+
+            if(!data.ok){
+                alert("Error: " + (data.message || "Cannot cancel."));
+                return;
+            }
+
+            // remove row
+            const row = document.querySelector(`[data-appointment-id="${currentApptId}"]`);
+            if(row) row.remove();
+
+            closeModal("cancelModal");
+            alert("Appointment cancelled.");
+        });
+    </script>
+}

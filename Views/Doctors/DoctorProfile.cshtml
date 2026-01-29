@@ -1,0 +1,174 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using MediCare.App.Models
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    Layout = "_DoctorLayout";
+    ViewData["Title"] = "Doctor Dashboard";
+}
+
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    @await Html.PartialAsync("_DoctorSidebar")
+
+    <!-- Main -->
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Doctor Dashboard</h1>
+                <p>Hospital Management Overview</p>
+            </div>
+            <div class="header-right">
+                <div class="user-profile">
+                    <div class="user-avatar">AD</div>
+                </div>
+            </div>
+        </header>
+
+        <div id="profile-section" class="content-section">
+            <div class="section-header">
+                <h2>My Profile</h2>
+                <button id="btnEdit" class="btn-primary" type="button">Edit Profile</button>
+            </div>
+
+            <div class="profile-section">
+                <div class="profile-card">
+                    <div class="profile-picture-container">
+                        <div class="profile-picture">👨‍⚕️</div>
+                        <div class="upload-overlay" onclick="handleProfilePictureUpload()">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M10 5V15M5 10H15" stroke="white" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <h3>@ViewBag.FullName</h3>
+                    <p class="user-role">@ViewBag.SpecialtyName</p>
+
+                    <button class="btn-secondary edit-profile-btn"
+                            onclick="showToast('Change Password feature coming soon!', 'info')">
+                        Change Password
+                    </button>
+
+                    <form asp-controller="Dashboard" asp-action="Logout" asp-route-area=""
+                            method="post" class="mt-3">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-danger logout-btn" style="margin-top:10px;">
+                            🔒 Logout
+                        </button>
+                    </form>
+                </div>
+
+                <form id="profileForm"
+                        asp-controller="Dashboard"
+                        asp-action="UpdateProfile"
+                        method="post"
+                        class="profile-details">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Full Name -->
+                    <div class="detail-row">
+                        <span class="detail-label">Full Name:</span>
+
+                        <!-- read -->
+                        <span class="detail-value read-view">@ViewBag.FullName</span>
+
+                        <!-- edit -->
+                        <span class="detail-value edit-view hidden">
+                            <input class="form-input" name="fullName" value="@ViewBag.FullName" />
+                        </span>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="detail-row">
+                        <span class="detail-label">Email:</span>
+
+                        <span class="detail-value read-view">@ViewBag.Email</span>
+
+                        <span class="detail-value edit-view hidden">
+                            <input class="form-input" type="email" name="email" value="@ViewBag.Email" />
+                            <small class="hint">Changing email also updates your username.</small>
+                        </span>
+                    </div>
+
+                    <!-- Specialization -->
+                    <div class="detail-row">
+                        <span class="detail-label">Specialization:</span>
+
+                        <!-- read -->
+                        <span class="detail-value read-view">@ViewBag.SpecialtyName</span>
+
+                        <!-- edit -->
+                        <span class="detail-value edit-view hidden">
+                            <select class="form-select" name="specialtyId" required>
+                                @foreach (var item in (IEnumerable<SelectListItem>)(ViewBag.Specialties ?? new List<SelectListItem>()))
+                                {
+                                    if (item.Selected)
+                                    {
+                                        <option value="@item.Value" selected="selected">@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </span>
+                    </div>
+
+                    <!-- Biography -->
+                    <div class="detail-row">
+                        <span class="detail-label">Biography:</span>
+
+                        <span class="detail-value read-view">@ViewBag.Bio</span>
+
+                        <span class="detail-value edit-view hidden">
+                            <textarea class="form-textarea" name="bio" rows="4">@(ViewBag.Bio ?? "")</textarea>
+                        </span>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="detail-row">
+                        <span class="detail-label">Phone:</span>
+
+                        <span class="detail-value read-view">@ViewBag.Phone</span>
+
+                        <span class="detail-value edit-view hidden">
+                            <input class="form-input" name="phone" value="@ViewBag.Phone" placeholder="+880 123 456 789" />
+                        </span>
+                    </div>
+
+                    <!-- Save / Cancel (only in edit mode) -->
+                    <div class="detail-row full-width edit-view hidden" id="saveBar">
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                        <button type="button" id="btnCancel" class="btn-secondary" style="margin-left:8px;">Cancel</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function showToast(msg, type) { alert(msg); }
+    function handleProfilePictureUpload() { showToast('Profile picture upload coming soon!', 'info'); }
+
+    const btnEdit   = document.getElementById('btnEdit');
+    const btnCancel = document.getElementById('btnCancel');
+    const readViews = document.querySelectorAll('.read-view');
+    const editViews = document.querySelectorAll('.edit-view');
+
+    function setEditMode(on) {
+      readViews.forEach(el => el.classList.toggle('hidden', on));
+      editViews.forEach(el => el.classList.toggle('hidden', !on));
+    }
+
+    if (btnEdit)   btnEdit.addEventListener('click', () => setEditMode(true));
+    if (btnCancel) btnCancel.addEventListener('click', () => { setEditMode(false); window.location.reload(); });
+
+    // start read-only
+    setEditMode(false);
+</script>

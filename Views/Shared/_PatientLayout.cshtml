@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - MediCare Patient</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Global Styles -->
+    <link rel="stylesheet" href="~/css/globals.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <!-- Doctor Dashboard Styles -->
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Appointment.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/patient-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/MyAppointments.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/recent-appointment.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/patient-profile.css" asp-append-version="true" />
+
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+    <div class="dashboard-layout">
+        <!-- Main content from page will render here -->
+        @RenderBody()
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

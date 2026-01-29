@@ -1,0 +1,242 @@
+﻿@model MediCare.App.ViewModels.Doctor.DoctorAppointmentsVM
+@{
+    Layout = "_DoctorLayout";
+    ViewData["Title"] = "Upcoming Appointments";
+
+    string todayDisplay = Model.TodayDate
+        .ToDateTime(TimeOnly.MinValue)
+        .ToString("MMM dd, yyyy");
+}
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script type="module">
+    import lucide from "https://unpkg.com/lucide@latest/dist/esm/lucide.js";
+    window.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+    });
+</script>
+
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    @await Html.PartialAsync("_DoctorSidebar")
+
+    <!-- Main -->
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Appointments</h1>
+                <p>Today's schedule and upcoming patients</p>
+            </div>
+            <div class="header-right">
+                <div class="user-profile">
+                    <div class="user-avatar">AD</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="doc-appointment-container min-h-screen p-4 sm:p-6 lg:p-8">
+
+            <!-- Header / Title -->
+            <header class="mb-6">
+                <h1 class="text-3xl font-bold" style="color: var(--doc-appointment-primary);">
+                    Upcoming Appointments
+                </h1>
+                <p class="text-lg" style="color: var(--doc-appointment-text-muted);">
+                    Manage your patient bookings and filter appointments easily.
+                </p>
+            </header>
+
+            <div class="space-y-6">
+
+                <!-- Search + Action Row -->
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+
+                    <!-- Search Form -->
+                    <form method="get"
+                          asp-controller="DoctorAppointments"
+                          asp-action="Index"
+                          class="doc-appointment-search relative w-full md:w-80 transition duration-300 rounded-lg overflow-hidden border border-gray-300 focus-within:border-[var(--doc-appointment-primary)]">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                            <i data-lucide="search" class="w-5 h-5" style="color: var(--doc-appointment-text-muted);"></i>
+                        </span>
+                        <input type="search"
+                               name="q"
+                               value="@Model.SearchTerm"
+                               placeholder="Search by name, email, or date..."
+                               class="w-full py-2 pl-10 pr-4 rounded-lg focus:outline-none text-sm bg-white"
+                               style="color: var(--doc-appointment-text-dark);" />
+                    </form>
+
+                    <!-- Today's Schedule Button -->
+                    <button type="button"
+                            id="openModalBtn"
+                            onclick="openModal()"
+                            class="doc-appointment-action-button w-full md:w-auto px-4 py-2 font-semibold text-white rounded-lg transition duration-300 hover:opacity-90"
+                            style="background-color: var(--doc-appointment-primary); box-shadow: var(--doc-appointment-shadow-primary);">
+                        <i data-lucide="calendar" class="w-4 h-4 inline mr-2"></i>
+                        Today's Schedule
+                    </button>
+                </div>
+
+                <!-- Appointment Table Card -->
+                <div class="doc-appointment-card rounded-xl p-4 md:p-6 overflow-hidden">
+                    <h2 class="text-xl font-semibold mb-4" style="color: var(--doc-appointment-primary-dark);">
+                        All Booked Patients
+                    </h2>
+
+                    <div class="overflow-x-auto">
+                        <table class="doc-appointment-table w-full whitespace-nowrap text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50/50">
+                                    <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider rounded-tl-xl">Patient Name</th>
+                                    <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider hidden sm:table-cell">Email</th>
+                                    <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider hidden lg:table-cell">Phone</th>
+                                    <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Reason</th>
+                                    <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider hidden md:table-cell">Gender</th>
+                                    <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider">Date/Time</th>
+                                    <th class="px-4 py-3 font-medium text-xs uppercase tracking-wider rounded-tr-xl hidden lg:table-cell">Branch</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.AllAppointments.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="7" class="px-4 py-10 text-center text-sm" style="color: var(--doc-appointment-text-muted);">
+                                            No appointments found.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    foreach (var appt in Model.AllAppointments)
+                                    {
+                                        var dateStr = appt.StartDateTimeLocal.ToString("MMM dd, yyyy");
+                                        var timeStr = appt.StartDateTimeLocal.ToString("hh:mm tt");
+
+                                        <tr class="hover:bg-gray-50/50 transition duration-150">
+                                            <td class="px-4 py-4 font-medium">@appt.PatientName</td>
+                                            <td class="px-4 py-4 hidden sm:table-cell text-sm" style="color: var(--doc-appointment-text-muted);">
+                                                @appt.PatientEmail
+                                            </td>
+                                            <td class="px-4 py-4 hidden lg:table-cell text-sm" style="color: var(--doc-appointment-text-muted);">
+                                                @appt.PatientPhone
+                                            </td>
+                                            <td class="px-4 py-4">
+                                                <span class="px-3 py-1 rounded-full text-xs font-semibold
+                                                            @(appt.Reason.ToLower().Contains("urgent")
+                                                                                                            || appt.Reason.ToLower().Contains("post")
+                                                                                                            || appt.Reason.ToLower().Contains("emergency")
+                                                                                                              ? "bg-red-100 text-red-500"
+                                                                                                              : "bg-green-100 text-green-700")">
+                                            @appt.Reason
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4 hidden md:table-cell text-sm" style="color: var(--doc-appointment-text-muted);">
+                                        @appt.Gender
+                                    </td>
+                                    <td class="px-4 py-4 font-medium text-sm">
+                                        @dateStr<br class="sm:hidden" /> @timeStr
+                                    </td>
+                                    <td class="px-4 py-4 hidden lg:table-cell text-sm" style="color: var(--doc-appointment-text-muted);">
+                                        @appt.BranchName
+                                    </td>
+                                </tr>
+                                                                }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div> <!-- /space-y-6 -->
+        </div> <!-- /doc-appointment-container -->
+        <!-- Modal -->
+        <div id="scheduleModal"
+             class="doc-appointment-modal-overlay fixed inset-0 hidden items-center justify-center p-4"
+             onclick="if(event.target.id === 'scheduleModal') closeModal()">
+
+            <div class="doc-appointment-modal-content w-full max-w-3xl rounded-xl p-6 relative transition-all duration-300 transform scale-95"
+                 style="background-color: var(--doc-appointment-card-bg);">
+
+                <!-- Modal Header -->
+                <div class="flex justify-between items-center pb-3 mb-4"
+                     style="border-bottom: 1px solid var(--doc-appointment-border-color);">
+                    <h3 class="text-2xl font-semibold" style="color: var(--doc-appointment-primary-dark);" id="modalTitle">
+                        Today's Schedule: @todayDisplay
+                    </h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition duration-150">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div id="modalBody" class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+
+                    @if (Model.TodayAppointments.Count == 0)
+                    {
+                        <div class="p-6 text-center border rounded-lg"
+                             style="border-color: var(--doc-appointment-border-color); background-color: var(--doc-appointment-card-bg);">
+                            <p class="font-semibold text-lg">No appointments today</p>
+                            <p class="text-sm" style="color: var(--doc-appointment-text-muted);">
+                                You have no scheduled patients for today.
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        foreach (var appt in Model.TodayAppointments)
+                        {
+                            var timeStr = appt.StartDateTimeLocal.ToString("hh:mm tt");
+
+                            var isUrgent = appt.Reason.ToLower().Contains("urgent")
+                            || appt.Reason.ToLower().Contains("post")
+                            || appt.Reason.ToLower().Contains("emergency");
+
+                            var chipBg = isUrgent ? "var(--doc-appointment-danger)" : "var(--doc-appointment-primary)";
+                            var chipText = "white";
+
+                            var cardBg = isUrgent
+                            ? "var(--doc-appointment-danger-light)"
+                            : "var(--doc-appointment-success-light)";
+
+                            <div class="p-4 rounded-lg flex justify-between items-center border"
+                                 style="border-color: var(--doc-appointment-border-color); background-color:@cardBg;">
+                                <div>
+                                    <p class="font-semibold text-lg">@appt.PatientName</p>
+                                    <p class="text-sm" style="color: var(--doc-appointment-text-muted);">
+                                        @timeStr | @appt.Reason
+                                    </p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold"
+                                      style="background-color:@chipBg; color:@chipText;">
+                                    @appt.BranchName
+                                </span>
+                            </div>
+                        }
+
+                        <p class="pt-2 text-center text-sm" style="color: var(--doc-appointment-text-muted);">
+                            End of today's active schedule.
+                        </p>
+                    }
+
+                </div>
+                <!-- /Modal Body -->
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function openModal() {
+        const modal = document.getElementById("scheduleModal");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex"); // center with flexbox
+    }
+    function closeModal() {
+        const modal = document.getElementById("scheduleModal");
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+</script>

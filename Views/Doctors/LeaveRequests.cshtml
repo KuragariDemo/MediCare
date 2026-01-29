@@ -1,0 +1,544 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject UserManager<MediCare.App.Models.ApplicationUser> UserManager
+
+@{
+
+    Layout = "_DoctorLayout";
+    ViewData["Title"] = "Doctor Dashboard";
+
+    var me = UserManager.GetUserAsync(User).Result;
+    var doctorId = me?.Id ?? "";
+    var doctorName = !string.IsNullOrWhiteSpace(me?.FullName)
+        ? me!.FullName
+        : (me?.UserName ?? "Doctor");
+}
+
+<div class="dashboard-container">
+    <!-- Sidebar -->
+@await Html.PartialAsync("_DoctorSidebar")
+
+    <!-- Main -->
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Doctor Dashboard</h1>
+                <p>Hospital Management Overview</p>
+            </div>
+            <div class="header-right">
+                <div class="user-profile">
+                    <div class="user-avatar">AD</div>
+                </div>
+            </div>
+        </header>
+
+    <div class="section-content active" id="leave-request-section">
+        <div class="leave-request-container">
+            <div class="leave-request-header">
+                <div class="header-content">
+                    <h2>Duty Block Request</h2>
+                    <p>Request time off from your assigned duties</p>
+                </div>
+                <button class="btn-primary" id="openCreateModalBtn">
+                    <span>➕</span><span>New Leave Request</span>
+                </button>
+            </div>
+
+            <div class="leave-tabs">
+                <button class="leave-tab-btn active" data-tab="all">All Requests</button>
+                <button class="leave-tab-btn" data-tab="pending">Pending</button>
+                <button class="leave-tab-btn" data-tab="approved">Approved</button>
+                <button class="leave-tab-btn" data-tab="rejected">Rejected</button>
+                <button class="leave-tab-btn" data-tab="cancelled">Cancelled</button>
+            </div>
+
+            <div class="leave-requests-list" id="leaveRequestsList">
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-state-icon">📋</div>
+                    <h3>No Duty Block Requests</h3>
+                    <p>You haven't submitted any duty block requests yet.</p>
+                    <button class="btn-primary-empty" id="openCreateModalBtn2">
+                        <span>➕</span><span>Create Your First Request</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATE MODAL -->
+    <div class="modal hidden" id="leaveRequestModal">
+        <div class="modal-content leave-request-modal-content">
+            <div class="modal-header">
+                <h2>New Duty Block Request</h2>
+                <button class="close-modal-btn" data-close="leaveRequestModal">❌</button>
+            </div>
+            <div class="modal-body">
+                <form id="leaveRequestForm" class="leave-request-form" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="DoctorId" id="doctorId" value="@doctorId" />
+                    <div class="form-group-modern">
+                        <label>Doctor Name</label>
+                        <div class="input-wrapper-modern">
+                            <span class="input-icon-modern">👨‍⚕️</span>
+                            <input type="text" value="@doctorName" class="form-input-modern" readonly />
+                        </div>
+                    </div>
+
+                    <div class="form-row-modern">
+                        <div class="form-group-modern">
+                            <label for="leaveStartDate">Block Start Date</label>
+                            <div class="input-wrapper-modern">
+                                <span class="input-icon-modern">📅</span>
+                                <input type="date" name="StartDate" id="leaveStartDate" class="form-input-modern" required />
+                            </div>
+                        </div>
+                        <div class="form-group-modern">
+                            <label for="leaveEndDate">Block End Date</label>
+                            <div class="input-wrapper-modern">
+                                <span class="input-icon-modern">📅</span>
+                                <input type="date" name="EndDate" id="leaveEndDate" class="form-input-modern" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group-modern">
+                        <label for="leaveReason">Reason for Request (optional)</label>
+                        <div class="input-wrapper-modern">
+                            <span class="input-icon-modern">📝</span>
+                            <textarea name="Reason" id="leaveReason" class="form-input-modern" style="padding-left:45px;height:80px;resize:vertical;"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="leave-duration-display" id="leaveDurationDisplay">
+                        <div class="duration-icon">⏱️</div>
+                        <div class="duration-text">
+                            <span class="duration-label">Duration:</span>
+                            <span class="duration-value" id="durationValue">Select dates</span>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary-modern" data-close="leaveRequestModal">
+                            <span>❌</span><span>Cancel</span>
+                        </button>
+                        <button type="submit" class="btn-primary-modern">
+                            <span>✅</span><span>Submit Request</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW MODAL -->
+    <div class="modal hidden" id="viewRequestModal">
+        <div class="modal-content view-request-modal-content">
+            <div class="modal-header">
+                <h2 id="viewModalTitle">Request Details</h2>
+                <button class="close-modal-btn" data-close="viewRequestModal">❌</button>
+            </div>
+            <div class="modal-body">
+                <div class="view-details-container">
+                    <div class="form-group-modern">
+                        <label>Status</label>
+                        <div class="input-wrapper-modern">
+                            <span class="input-icon-modern">🏷️</span>
+                            <input type="text" id="viewStatus" class="form-input-modern" readonly />
+                        </div>
+                    </div>
+                    <div class="form-group-modern">
+                        <label>Doctor</label>
+                        <div class="input-wrapper-modern">
+                            <span class="input-icon-modern">👨‍⚕️</span>
+                            <input type="text" id="viewDoctorName" class="form-input-modern" readonly />
+                        </div>
+                    </div>
+                    <div class="form-row-modern">
+                        <div class="form-group-modern">
+                            <label>Start Date</label>
+                            <div class="input-wrapper-modern">
+                                <span class="input-icon-modern">📅</span>
+                                <input type="text" id="viewStartDate" class="form-input-modern" readonly />
+                            </div>
+                        </div>
+                        <div class="form-group-modern">
+                            <label>End Date</label>
+                            <div class="input-wrapper-modern">
+                                <span class="input-icon-modern">📅</span>
+                                <input type="text" id="viewEndDate" class="form-input-modern" readonly />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group-modern">
+                        <label>Reason</label>
+                        <div class="input-wrapper-modern">
+                            <span class="input-icon-modern">📝</span>
+                            <textarea id="viewReason" class="form-input-modern" style="padding-left:45px;height:80px;resize:none;" readonly></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group-modern">
+                        <label>Submission Date</label>
+                        <div class="input-wrapper-modern">
+                            <span class="input-icon-modern">📤</span>
+                            <input type="text" id="viewSubmitted" class="form-input-modern" readonly />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary-modern" data-close="viewRequestModal"><span>⬅️</span><span>Close</span></button>
+                <form id="cancelForm" method="post" class="hidden">
+                    @Html.AntiForgeryToken()
+                </form>
+                <button type="button" class="btn-primary-modern danger hidden" id="viewCancelBtn">
+                    <span>🗑️</span><span>Cancel Request</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CANCEL CONFIRM -->
+    <div class="modal hidden" id="cancelRequestModal">
+        <div class="modal-content cancel-modal-content">
+            <div class="modal-header">
+                <h2>Confirm Cancellation</h2>
+                <button class="close-modal-btn" data-close="cancelRequestModal">❌</button>
+            </div>
+            <div class="modal-body">
+                <h3>⚠️ Warning: This action cannot be undone.</h3>
+                <p>Are you sure you want to cancel the duty block request for the period <strong id="cancelDates"></strong>?</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary-modern" data-close="cancelRequestModal"><span>↩️</span><span>Go Back</span></button>
+                <button type="button" class="btn-primary-modern danger" id="confirmCancelBtn"><span>🗑️</span><span>Confirm Cancel</span></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // ----- Razor -> JS -----
+            const DOC_NAME  = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(doctorName));
+            const DOCTOR_ID = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(doctorId));
+
+            // Routes
+            const LIST_URL   = '@Url.Action("List", "BlockRequests", new { area = "" })';         // GET
+            const DET_URL    = '@Url.Action("Details", "BlockRequests", new { area = "" })' + '/'; // + {id}
+            const CREATE_URL = '@Url.Action("Create", "BlockRequests", new { area = "" })';       // POST
+            const CANCEL_URL = '@Url.Action("Cancel", "BlockRequests", new { area = "" })' + '/';  // POST + {id}
+
+            // ----- Elements -----
+            const leaveRequestsList = document.getElementById('leaveRequestsList');
+            const emptyState        = document.getElementById('emptyState');
+            const tabs              = document.querySelectorAll('.leave-tab-btn');
+
+            const modalEl = id => document.getElementById(id);
+            const showModal = id => modalEl(id)?.classList.remove('hidden');
+            const hideModal = id => modalEl(id)?.classList.add('hidden');
+
+            // safer button hooks
+            const createBtn  = document.getElementById('openCreateModalBtn');
+            const createBtn2 = document.getElementById('openCreateModalBtn2');
+
+            if (createBtn) {
+                createBtn.addEventListener('click', () => showModal('leaveRequestModal'));
+            }
+            if (createBtn2) {
+                createBtn2.addEventListener('click', () => showModal('leaveRequestModal'));
+            }
+
+            // Close any modal with [data-close="modalId"]
+            document.querySelectorAll('[data-close]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-close');
+                    hideModal(targetId);
+                });
+            });
+
+            // ----- Helpers -----
+            const fmtDate = iso => {
+                if (!iso) return 'N/A';
+                const d = new Date(iso + 'T00:00:00');
+                return d.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+            };
+
+            const dayDiff = (a, b) => {
+                const A = new Date(a + 'T00:00:00');
+                const B = new Date(b + 'T00:00:00');
+                if (A > B) return -1;
+                const ms = (B - A);
+                return Math.ceil(ms / (1000*60*60*24)) + 1;
+            };
+
+            const statusIcon = s => ({ approved:'✅', pending:'🟡', rejected:'❌', cancelled:'🚫' }[s] || '❓');
+
+            async function jsonOrError(res) {
+                const text = await res.text();
+                try {
+                    return { ok: res.ok, data: JSON.parse(text) };
+                } catch {
+                    console.error('[LeaveRequests] HTTP', res.status, res.statusText, text);
+                    return { ok: res.ok, data: null, raw: text };
+                }
+            }
+
+            // normalize server model to lowercase keys
+            const normalize = r => ({
+                id:        r.id        ?? r.Id,
+                doctorId:  r.doctorId  ?? r.DoctorId,
+                status:   (r.status    ?? r.Status)?.toLowerCase(),
+                start:     r.start     ?? r.Start,
+                end:       r.end       ?? r.End,
+                submitted: r.submitted ?? r.Submitted,
+                reason:    r.reason    ?? r.Reason
+            });
+
+            // ----- Rendering cards -----
+            function cardHtml(r){
+                const dur = dayDiff(r.start, r.end);
+                const durTxt = dur < 0 ? 'Invalid date range' : (dur === 1 ? '1 day' : `${dur} days`);
+                const canCancel = (r.status === 'pending' || r.status === 'approved');
+                return `
+                  <div class="leave-request-card" data-status="${r.status}">
+                    <div class="leave-request-status-bar ${r.status}"></div>
+                    <div class="leave-request-content">
+                      <div class="leave-request-header-card">
+                        <div class="leave-request-icon">🗓️</div>
+                        <div class="leave-request-info">
+                          <h3>${r.reason ? r.reason : 'Duty Block'}</h3>
+                          <p class="leave-request-date"><strong>${fmtDate(r.start)}</strong> to <strong>${fmtDate(r.end)}</strong></p>
+                          <p class="leave-request-duration">${durTxt}</p>
+                        </div>
+                      </div>
+                      <div class="leave-request-status">
+                        <span class="status-badge ${r.status}">${statusIcon(r.status)} ${r.status[0].toUpperCase()+r.status.slice(1)}</span>
+                        <p class="leave-request-submitted">Submitted: ${fmtDate(r.submitted)}</p>
+                      </div>
+                    </div>
+                    <div class="leave-request-actions">
+                      <button class="action-btn-icon" data-view="${r.id}">
+                        <span>👁️</span><span>Details</span>
+                      </button>
+                      ${canCancel ? `
+                        <button class="action-btn-icon danger" data-cancel="${r.id}">
+                          <span>🗑️</span><span>Cancel</span>
+                        </button>` : ``}
+                    </div>
+                  </div>
+                `;
+            }
+
+            async function load(status='all'){
+                tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === status));
+                const url = `${LIST_URL}?status=${encodeURIComponent(status)}`;
+
+                const res = await fetch(url, {
+                    headers: { 'Accept':'application/json' },
+                    credentials: 'same-origin'
+                });
+                const { ok, data } = await jsonOrError(res);
+
+                leaveRequestsList.innerHTML = '';
+
+                if (!ok) {
+                    leaveRequestsList.innerHTML =
+                      `<div class="empty-state">Failed to load requests.</div>`;
+                    return;
+                }
+
+                const items = (data || []).map(normalize);
+
+                if (items.length === 0){
+                    if (status === 'all') {
+                        // show first-time empty state block with CTA
+                        emptyState.style.display = 'block';
+                        leaveRequestsList.appendChild(emptyState);
+
+                        // re-bind Create button inside emptyState (in case we lost it)
+                        const createBtn2Now = document.getElementById('openCreateModalBtn2');
+                        if (createBtn2Now) {
+                            createBtn2Now.onclick = () => showModal('leaveRequestModal');
+                        }
+                    } else {
+                        leaveRequestsList.innerHTML =
+                          `<div class="empty-state" style="border-style: solid; padding: 40px;">
+                             <div class="empty-state-icon">🔎</div>
+                             <h3>No ${status} Requests</h3>
+                             <p>There are no requests in the '${status}' category.</p>
+                           </div>`;
+                    }
+                    hookCardButtons();
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                leaveRequestsList.innerHTML = items.map(cardHtml).join('');
+                hookCardButtons();
+            }
+
+            // tab click -> reload filter
+            tabs.forEach(t => {
+                t.addEventListener('click', () => load(t.dataset.tab));
+            });
+
+            // ----- Create form -----
+            const startInput = document.getElementById('leaveStartDate');
+            const endInput   = document.getElementById('leaveEndDate');
+            const durSpan    = document.getElementById('durationValue');
+            const form       = document.getElementById('leaveRequestForm');
+
+            function updateDur(){
+                if(!startInput.value || !endInput.value){
+                    durSpan.textContent = 'Select dates';
+                    return;
+                }
+                const d = dayDiff(startInput.value, endInput.value);
+                durSpan.textContent = d < 0 ? 'Invalid date range' : (d === 1 ? '1 day' : `${d} days`);
+            }
+
+            startInput.addEventListener('change', updateDur);
+            endInput.addEventListener('change', updateDur);
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                if(!startInput.value || !endInput.value){
+                    alert('Please select start and end dates.');
+                    return;
+                }
+                if(dayDiff(startInput.value, endInput.value) < 0){
+                    alert('Start date cannot be after end date.');
+                    return;
+                }
+
+                const fd = new FormData(form);
+
+                const res = await fetch(CREATE_URL, {
+                    method:'POST',
+                    headers: { 'Accept':'application/json' },
+                    body: fd,
+                    credentials: 'same-origin'
+                });
+                const { ok, raw } = await jsonOrError(res);
+
+                if(!ok){
+                    alert('Failed to submit: ' + (raw ?? 'Unknown error'));
+                    return;
+                }
+
+                hideModal('leaveRequestModal');
+                await load('pending'); // jump to pending tab
+                alert('New Duty Block Request submitted (Pending).');
+                form.reset();
+                durSpan.textContent = 'Select dates';
+            });
+
+            // ----- View & Cancel -----
+            let currentId = null;
+
+            function hookCardButtons(){
+                // DETAILS
+                document.querySelectorAll('[data-view]').forEach(btn => {
+                    btn.onclick = async () => {
+                        const id = btn.getAttribute('data-view');
+                        currentId = +id;
+
+                        const res = await fetch(DET_URL + id, {
+                            headers: { 'Accept':'application/json' },
+                            credentials: 'same-origin'
+                        });
+                        const jr = await jsonOrError(res);
+                        if(!jr.ok || !jr.data){
+                            alert('Not found');
+                            return;
+                        }
+                        const d = normalize(jr.data);
+
+                        document.getElementById('viewModalTitle').textContent =
+                            `Request #${d.id}: ${d.reason || 'Duty Block'}`;
+
+                        document.getElementById('viewStatus').value     = d.status[0].toUpperCase()+d.status.slice(1);
+                        document.getElementById('viewDoctorName').value = DOC_NAME;
+                        document.getElementById('viewStartDate').value  = fmtDate(d.start);
+                        document.getElementById('viewEndDate').value    = fmtDate(d.end);
+                        document.getElementById('viewReason').value     = d.reason || '';
+                        document.getElementById('viewSubmitted').value  = fmtDate(d.submitted);
+
+                        const canBtn = (d.status === 'pending' || d.status === 'approved');
+                        document.getElementById('viewCancelBtn').classList.toggle('hidden', !canBtn);
+
+                        showModal('viewRequestModal');
+                    };
+                });
+
+                // DIRECT CANCEL BTN on card
+                document.querySelectorAll('[data-cancel]').forEach(btn => {
+                    btn.onclick = async () => {
+                        const id = +btn.getAttribute('data-cancel');
+                        currentId = id;
+
+                        const res = await fetch(DET_URL + id, {
+                            headers: { 'Accept':'application/json' },
+                            credentials: 'same-origin'
+                        });
+                        const jr = await jsonOrError(res);
+                        const d = jr.data ? normalize(jr.data) : null;
+                        if (d) {
+                            document.getElementById('cancelDates').textContent =
+                                `${fmtDate(d.start)} to ${fmtDate(d.end)}`;
+                        }
+                        showModal('cancelRequestModal');
+                    };
+                });
+            }
+
+            // 'Cancel Request' button from inside view modal
+            document.getElementById('viewCancelBtn').onclick = () => {
+                hideModal('viewRequestModal');
+
+                document.getElementById('cancelDates').textContent =
+                    document.getElementById('viewStartDate').value
+                    + ' to '
+                    + document.getElementById('viewEndDate').value;
+
+                showModal('cancelRequestModal');
+            };
+
+            // confirm cancel
+            document.getElementById('confirmCancelBtn').onclick = async () => {
+                if(!currentId) return;
+
+                const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                const tokenVal = tokenInput ? tokenInput.value : '';
+
+                const res = await fetch(CANCEL_URL + currentId, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': tokenVal,
+                        'Accept':'application/json'
+                    },
+                    credentials: 'same-origin'
+                });
+                const { ok, raw } = await jsonOrError(res);
+
+                if(!ok){
+                    alert('Cancel failed: ' + (raw ?? 'Unknown error'));
+                    return;
+                }
+
+                hideModal('cancelRequestModal');
+                const activeTab = document.querySelector('.leave-tab-btn.active')?.dataset.tab || 'all';
+                await load(activeTab);
+                alert(`Request #${currentId} cancelled.`);
+                currentId = null;
+            };
+
+            // initial load
+            load('all');
+        });
+    </script>
+}
+
+
+

@@ -1,0 +1,161 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Doctors - ForestView Hospital</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2" />
+                    <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <span class="logo-text"><strong>ForestView</strong><br />Hospital</span>
+            </div>
+            <nav class="nav">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="doctors.html" class="nav-link active">Doctors</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+            </nav>
+            <div class="auth-buttons">
+                <button class="register-btn">Register</button>
+                <button class="login-btn">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="7" stroke="white" stroke-width="1.5" />
+                    </svg>
+                    Log in
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Doctors Hero -->
+    <section class="page-hero">
+        <div class="container">
+            <h1>Meet Our Expert Doctors</h1>
+            <p>Experienced professionals dedicated to your health</p>
+        </div>
+    </section>
+
+    <!-- Search and Filter -->
+    <section class="doctors-filter-section">
+        <div class="container">
+            <div class="filter-bar">
+                <div class="search-box">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="9" cy="9" r="6" stroke="#00A8A8" stroke-width="2" />
+                        <path d="M13 13L17 17" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <input type="text" placeholder="Search by name or specialty..." id="doctorSearch">
+                </div>
+                <div class="filter-select">
+                    <button class="modern-select-btn" id="modernSelectBtn">
+                        <span id="selectedSpecialtyDisplay">All Specialties</span>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="select-arrow">
+                            <path d="M4 6l4 4 4-4" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </button>
+                    <div class="modern-select-dropdown" id="modernSelectDropdown">
+                        <div class="select-option active" data-value="">
+                            <span>All Specialties</span>
+                            <span class="check-icon">✓</span>
+                        </div>
+                        <div class="select-option" data-value="cardiology">
+                            <span>Cardiology</span>
+                            <span class="check-icon">✓</span>
+                        </div>
+                        <div class="select-option" data-value="dentistry">
+                            <span>Dentistry</span>
+                            <span class="check-icon">✓</span>
+                        </div>
+                        <div class="select-option" data-value="neurology">
+                            <span>Neurology</span>
+                            <span class="check-icon">✓</span>
+                        </div>
+                        <div class="select-option" data-value="pediatrics">
+                            <span>Pediatrics</span>
+                            <span class="check-icon">✓</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Doctors List -->
+    <section class="doctors-list-section">
+        <div class="container">
+            <div class="doctors-list" id="doctorsList">
+                <!-- Doctors will be loaded here by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-col">
+                    <div class="footer-logo">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2" />
+                            <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                        <span><strong>ForestView</strong><br />Hospital</span>
+                    </div>
+                    <p>Navigating Health Together: Your Trusted Medical Resource.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="doctors.html">Doctors</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Department</h4>
+                    <ul>
+                        <li><a href="#">Cardiology</a></li>
+                        <li><a href="#">Neurology</a></li>
+                        <li><a href="#">Urology</a></li>
+                        <li><a href="#">Radiology</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Location</h4>
+                    <p>10 Road Block-E, Banasree<br />Dhaka, Bangladesh</p>
+                    <p>0181234567</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>2024 ForestView Hospital. All rights reserved</p>
+                <div class="social-links">
+                    <a href="#" class="social-icon">📘</a>
+                    <a href="#" class="social-icon">📷</a>
+                    <a href="#" class="social-icon">💼</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="doctors.js"></script>
+</body>
+</html>

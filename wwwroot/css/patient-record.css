@@ -1,0 +1,170 @@
+﻿:root {
+    --primary: #00A8A8;
+    --primary-dark: #007A7A;
+    --danger: #FF5A58;
+    --danger-light: #FFEBEB;
+    --success-light: #EBFFEB;
+    --success-dark: #007A00;
+    --background: #f4f7f9;
+    --card-bg: #ffffff;
+    --text-dark: #1d2a33;
+    --text-muted: #5b6b75;
+    --border-color: #e3f1f6;
+    --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --shadow-primary: 0 4px 10px rgba(0, 168, 168, 0.2);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--background);
+    color: var(--text-dark);
+}
+
+.patient-record-container {
+    max-width: 90rem;
+    padding: 2rem 1rem;
+}
+
+.patient-record-card {
+    background-color: var(--card-bg);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-light);
+    padding: 1.5rem;
+}
+
+.patient-record-input {
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    color: var(--text-dark);
+    transition: all 0.2s;
+    width: 100%;
+}
+
+    .patient-record-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(0,168,168,0.2);
+        outline: none;
+    }
+
+.patient-record-table th {
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+    text-align: left;
+    border-bottom: 2px solid var(--border-color);
+    font-size: .8rem;
+    text-transform: uppercase;
+}
+
+.patient-record-table td {
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+    font-size: .95rem;
+}
+
+.patient-record-table tr:last-child td {
+    border-bottom: none;
+}
+
+.patient-record-row-hover {
+    transition: all 0.3s ease-in-out;
+}
+
+    .patient-record-row-hover:hover {
+        background-color: var(--card-bg);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+        position: relative;
+        z-index: 1;
+    }
+
+.patient-record-btn-primary {
+    background-color: var(--primary);
+    color: var(--card-bg);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+    .patient-record-btn-primary:hover {
+        background-color: var(--primary-dark);
+        box-shadow: var(--shadow-primary);
+    }
+
+.patient-record-btn-muted {
+    background-color: var(--background);
+    color: var(--text-muted);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+    font-weight: 500;
+    cursor: not-allowed;
+    opacity: 0.7;
+    width: 100%;
+    text-align: center;
+    display: inline-block;
+}
+
+.patient-record-btn-feedback {
+    background-color: var(--success-light);
+    color: var(--primary-dark);
+    border: 1px solid var(--primary);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    width: 100%;
+    text-align: center;
+    display: inline-block;
+}
+
+    .patient-record-btn-feedback:hover {
+        background-color: var(--primary);
+        color: var(--card-bg);
+    }
+
+.patient-record-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.patient-record-modal-content {
+    background-color: var(--card-bg);
+    border-radius: 1rem;
+    width: 90%;
+    max-width: 32rem;
+    box-shadow: var(--shadow-light);
+    padding: 1.5rem;
+    position: relative;
+}
+
+.patient-record-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: color 0.2s;
+}
+
+    .patient-record-close-btn:hover {
+        color: var(--danger);
+    }

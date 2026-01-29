@@ -1,0 +1,60 @@
+﻿
+
+@{
+    string Path() => Context?.Request?.Path.Value?.ToLower() ?? "";
+    Func<string, bool> isActive = href => Path().StartsWith(href.ToLower());
+}
+
+<aside class="dashboard-sidebar">
+    <div class="sidebar-header">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2" />
+            <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <div>
+            <h3>ForestView</h3>
+            <p>Patient Portal</p>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a asp-controller="Home"
+           asp-action="Index"
+           class="nav-item @(isActive("/home") ? "active" : "")">
+            <span class="nav-icon">🏠</span><span>Home</span>
+        </a>
+
+        <a asp-controller="PatientProfile"
+           asp-action="Index"
+           class="nav-item @(isActive("/patientprofile") ? "active" : "")">
+            <span class="nav-icon">👤</span><span>My Profile</span>
+        </a>
+
+        <a asp-controller="Appointment"
+           asp-action="Index"
+           class="nav-item @(isActive("/appointment") ? "active" : "")">
+            <span class="nav-icon">👨‍⚕️</span><span>Doctor Search</span>
+        </a>
+
+        <a asp-controller="PatientAppointments"
+           asp-action="My"
+           class="nav-item @(isActive("/patient/appointments") ? "active" : "")">
+            <span class="nav-icon">📅</span><span>My Appointment</span>
+        </a>
+
+        <a asp-controller="PatientAppointments"
+           asp-action="Recent"
+           class="nav-item @(isActive("/patient/appointments/recent") ? "active" : "")">
+            <span class="nav-icon">📅</span>
+            <span>Recent Appointments</span>
+        </a>
+
+
+    </nav>
+
+    <div class="sidebar-footer">
+        <a href="@Url.Action("Index", "Home", new { area = "" })" class="logout-btn">
+            <span>🚪</span><span>Back to Website</span>
+        </a>
+    </div>
+</aside>

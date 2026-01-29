@@ -1,0 +1,814 @@
+﻿@{
+    ViewData["Title"] = "Book Appointment - ForestView Hospital";
+    Layout = "_Layout";
+}
+
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+@functions { string AntiXsrf() => Xsrf.GetAndStoreTokens(Context).RequestToken!; }
+
+    <meta name="request-verification-token" content="@AntiXsrf()" />
+
+    <section class="container">
+        <style>
+            :root {
+                --teal: #00A8A8;
+                --teal-600: #0a4d68;
+                --ink: #0a4d68;
+                --muted: #6b7280;
+                --bg: #f7fafc;
+                --card: #ffffff;
+                --border: #e5e7eb;
+                --danger: #e11d48;
+            }
+
+            body {
+                background: var(--bg);
+                font-family: Roboto,system-ui,Segoe UI,Arial,sans-serif;
+            }
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 16px;
+            }
+
+            /* steps */
+            .wizard-steps {
+                display: grid;
+                grid-template-columns: 1fr 24px 1fr 24px 1fr;
+                align-items: center;
+                gap: 8px;
+                margin: 24px 0;
+            }
+
+            .step {
+                text-align: center;
+                opacity: .55
+            }
+
+                .step.active {
+                    opacity: 1
+                }
+
+            .step-number {
+                width: 36px;
+                height: 36px;
+                line-height: 36px;
+                border-radius: 50%;
+                background: #e6fffb;
+                color: var(--teal);
+                font-weight: 700;
+                margin: 0 auto 6px
+            }
+
+            .step-line {
+                height: 2px;
+                background: #e5e7eb
+            }
+
+            /* cards */
+            .wizard-content {
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                padding: 16px
+            }
+
+            .hidden {
+                display: none
+            }
+
+            /* search + list */
+            .doctor-search-header {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 12px;
+                align-items: center;
+                margin-bottom: 12px
+            }
+
+            .modern-search-bar {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 8px
+            }
+
+            .modern-search-input {
+                border: 2px solid var(--teal);
+                border-radius: 10px;
+                padding: 12px 14px;
+                outline: none
+            }
+
+            .modern-search-btn {
+                background: var(--teal);
+                color: #fff;
+                border: 0;
+                border-radius: 10px;
+                padding: 12px 18px;
+                font-weight: 600;
+                cursor: pointer
+            }
+
+            .specialty-filter-modern {
+                min-width: 240px;
+                justify-self: end
+            }
+
+            .specialty-select {
+                appearance: none;
+                border: 2px solid var(--teal);
+                border-radius: 10px;
+                padding: 12px 40px 12px 14px;
+                font-weight: 500;
+                color: var(--teal);
+                background: #fff
+            }
+
+            .doctor-selection {
+                display: grid;
+                grid-template-columns: repeat(auto-fill,minmax(320px,1fr));
+                gap: 16px
+            }
+
+            .doctor-card {
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 16px;
+                background: #fff
+            }
+
+                .doctor-card.selected {
+                    outline: 2px solid var(--teal)
+                }
+
+            .doctor-card-header {
+                display: flex;
+                gap: 12px;
+                align-items: center
+            }
+
+            .doctor-avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: var(--teal);
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700
+            }
+
+            .doctor-main h4 {
+                margin: 0
+            }
+
+            .doctor-main .doctor-speciality {
+                color: #4b5563;
+                margin-top: 2px
+            }
+
+            .doctor-bio {
+                margin-top: 8px;
+                color: #4b5563;
+                min-height: 24px
+            }
+
+            .doctor-actions {
+                margin-top: 12px;
+                display: flex;
+                gap: 8px
+            }
+
+            .btn-primary, .btn-secondary {
+                border: 0;
+                border-radius: 10px;
+                padding: 10px 14px;
+                cursor: pointer;
+                font-weight: 600
+            }
+
+            .btn-primary {
+                background: var(--teal);
+                color: #fff
+            }
+
+            .btn-secondary {
+                background: #eef2f7;
+                color: #111827
+            }
+
+            .wizard-actions, .schedule-actions {
+                display: flex;
+                justify-content: flex-end;
+                margin-top: 12px;
+                gap: 8px
+            }
+
+            .empty-state {
+                padding: 16px;
+                color: #6b7280
+            }
+
+            /* step 2 schedule */
+            .schedule-wrap {
+                margin-top: 8px;
+                overflow-x: auto
+            }
+
+            table.schedule {
+                width: 100%;
+                border-collapse: collapse
+            }
+
+            .schedule th, .schedule td {
+                padding: 12px 10px;
+                border-bottom: 1px solid var(--border)
+            }
+
+            .schedule thead th {
+                background: var(--teal-600);
+                color: #fff;
+                text-transform: uppercase;
+                font-size: 13px;
+                letter-spacing: .03em
+            }
+
+            tr.slot {
+                cursor: pointer;
+                transition: .15s
+            }
+
+                tr.slot:hover {
+                    background: #e8faff
+                }
+
+                tr.slot.selected {
+                    background: var(--teal);
+                    color: #fff
+                }
+
+            /* step 3 layout */
+            .grid-2 {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px
+            }
+
+            .card {
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                background: #fff
+            }
+
+            /* Appointment Details (teal rail, like your mock) */
+            .appt-details {
+                position: relative;
+                padding: 20px 22px
+            }
+
+                .appt-details::before {
+                    content: "";
+                    position: absolute;
+                    left: -1px;
+                    top: -1px;
+                    bottom: -1px;
+                    width: 10px;
+                    border-radius: 12px 0 0 12px;
+                    background: linear-gradient(180deg,var(--teal),#11c5c5)
+                }
+
+            .appt-title {
+                margin: 0 0 14px;
+                color: var(--ink);
+                font-size: 22px;
+                font-weight: 800
+            }
+
+            .row {
+                padding: 12px 0;
+                border-top: 1px solid #ecf2f6
+            }
+
+                .row:first-of-type {
+                    border-top: 0
+                }
+
+            .kicker {
+                display: block;
+                font-size: 12px;
+                letter-spacing: .08em;
+                color: #7b8a97;
+                text-transform: uppercase;
+                margin-bottom: 4px
+            }
+
+            .value {
+                font-size: 16px;
+                color: #0b3b4c;
+                font-weight: 700
+            }
+
+            .fee {
+                color: var(--danger);
+                font-size: 24px;
+                font-weight: 800
+            }
+
+            /* patient form */
+            .form-card {
+                padding: 20px 22px
+            }
+
+            .form-title {
+                margin: 0 0 12px;
+                color: var(--ink);
+                font-size: 20px;
+                font-weight: 800
+            }
+
+            .field {
+                display: flex;
+                flex-direction: column;
+                gap: 6px
+            }
+
+            .label {
+                font-size: 13px;
+                color: #4b5563;
+                font-weight: 700
+            }
+
+            .input, textarea.input {
+                border: 2px solid #e6f0f4;
+                border-radius: 12px;
+                padding: 12px 14px;
+                outline: none;
+                font-size: 15px;
+                transition: box-shadow .2s,border-color .2s
+            }
+
+                .input:focus, textarea.input:focus {
+                    border-color: var(--teal);
+                    box-shadow: 0 0 0 4px rgba(0,168,168,.12)
+                }
+
+            .grid {
+                display: grid;
+                gap: 16px
+            }
+
+                .grid.two {
+                    grid-template-columns: 1fr 1fr
+                }
+
+            .checkbox-line {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-top: 8px
+            }
+
+            /* modals */
+            .modal {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,.55);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000
+            }
+
+                .modal.visible {
+                    display: flex
+                }
+
+            .modal-content {
+                background: #fff;
+                color: var(--ink);
+                border-radius: 16px;
+                padding: 24px;
+                width: 90%;
+                max-width: 460px;
+                max-height: 90vh;
+                overflow: auto;
+                box-shadow: 0 20px 60px rgba(0,0,0,.25)
+            }
+        </style>
+
+        <!-- steps header -->
+        <div class="wizard-steps" id="steps">
+            <div class="step active" data-step="1"><div class="step-number">1</div><div>Select Doctor</div></div>
+            <div class="step-line"></div>
+            <div class="step" data-step="2"><div class="step-number">2</div><div>Pick Schedule</div></div>
+            <div class="step-line"></div>
+            <div class="step" data-step="3"><div class="step-number">3</div><div>Confirm & Pay</div></div>
+        </div>
+
+        <!-- STEP 1 -->
+        <div class="wizard-content" id="step1">
+            <div class="doctor-search-header">
+                <div class="modern-search-bar">
+                    <input id="appointmentDoctorSearch" class="modern-search-input" placeholder="Search doctors by name..." />
+                    <button id="appointmentSearchBtn" class="modern-search-btn" type="button">Search</button>
+                </div>
+                <div class="specialty-filter-modern">
+                    <select id="specialtySelect" class="specialty-select"><option value="">All Specialties</option></select>
+                </div>
+            </div>
+
+            <div id="doctorSelection" class="doctor-selection"></div>
+            <input type="hidden" id="selectedDoctorId" />
+            <div class="wizard-actions"><button id="btnNext1" type="button" class="btn-primary" disabled>Next</button></div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="wizard-content hidden" id="step2">
+            <h2>Choose Date & Time</h2>
+            <div id="selectedDoctorInfo" style="margin:6px 0 10px;color:var(--ink);"></div>
+            <div class="schedule-wrap">
+                <table class="schedule">
+                    <thead><tr><th>Duty Date</th><th>Start</th><th>End</th><th>Branch</th></tr></thead>
+                    <tbody id="scheduleBody"></tbody>
+                </table>
+            </div>
+            <div class="schedule-actions">
+                <button id="backTo1" type="button" class="btn-secondary">Back</button>
+                <button id="btnNext2" type="button" class="btn-primary" disabled>Select & Next</button>
+            </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="wizard-content hidden" id="step3">
+            <h2>Confirm Your Appointment</h2>
+            <div class="grid-2">
+                <!-- Appointment details (teal rail) -->
+                <div class="card appt-details">
+                    <h3 class="appt-title">Selected Appointment Details</h3>
+                    <div class="row"><span class="kicker">Doctor Name</span><div class="value" id="confirmDoctor">—</div></div>
+                    <div class="row"><span class="kicker">Specialty</span><div class="value" id="confirmSpecialty">—</div></div>
+                    <div class="row"><span class="kicker">Email</span><div class="value" id="confirmEmail">—</div></div>
+                    <div class="row"><span class="kicker">Duty Date</span><div class="value" id="confirmDate">—</div></div>
+                    <div class="row"><span class="kicker">Duty Time</span><div class="value" id="confirmTime">—</div></div>
+                    <div class="row"><span class="kicker">Branch</span><div class="value" id="confirmBranch">—</div></div>
+                    <div class="row"><span class="kicker">Consultation Fee</span><div class="fee" id="confirmFee">—</div></div>
+                </div>
+
+                <!-- Patient form -->
+                <div class="card form-card">
+                    <h3 class="form-title">Patient Information</h3>
+                    <form id="patientForm" novalidate>
+                        <div class="grid two">
+                            <div class="field"><label class="label">Full Name *</label><input id="patientName" class="input" type="text" required></div>
+                            <div class="field"><label class="label">Email Address *</label><input id="patientEmail" class="input" type="email" required></div>
+                        </div>
+                        <div class="grid two" style="margin-top:16px;">
+                            <div class="field"><label class="label">Phone Number *</label><input id="patientPhone" class="input" type="tel" required></div>
+                            <div class="field"><label class="label">Age (optional)</label><input id="patientAge" class="input" type="number" min="1"></div>
+                        </div>
+                        <div class="field" style="margin-top:16px;">
+                            <label class="label">Reason for Visit</label>
+                            <textarea id="visitReason" class="input" rows="4" placeholder="Briefly describe your symptoms..."></textarea>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <label class="checkbox-line" style="margin-top:10px;">
+                <input id="confirmCheckbox" type="checkbox">
+                <span>I confirm that all appointment details are correct</span>
+            </label>
+
+            <div class="schedule-actions" style="margin-top:10px;">
+                <button id="backTo2" type="button" class="btn-secondary">Back</button>
+                <button id="bookAppointmentBtn" type="button" class="btn-primary">Book Appointment</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Payment Method Modal -->
+    <div class="modal" id="paymentMethodModal">
+        <div class="modal-content">
+            <h3 style="margin:0 0 8px;">How would you like to pay?</h3>
+            <p id="paymentFeeLine" style="color:var(--teal);margin:6px 0 16px;"></p>
+            <div style="display:flex;gap:10px;">
+                <button type="button" class="btn-primary" id="payWithCard">Pay with Card</button>
+                <button type="button" class="btn-secondary" id="payCash">Cash at Clinic</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Modal -->
+    <div class="modal" id="cardPaymentModal">
+        <div class="modal-content">
+            <h3 style="margin-top:0;">Enter Card Information</h3>
+            <form id="cardPaymentForm">
+                <div class="field"><label class="label">Card Number</label><input id="cardNumber" class="input" maxlength="19" placeholder="XXXX XXXX XXXX XXXX" required></div>
+                <div class="grid two" style="margin-top:12px;">
+                    <div class="field"><label class="label">Expiry (MM/YY)</label><input id="cardExpiry" class="input" maxlength="5" required></div>
+                    <div class="field"><label class="label">CVC</label><input id="cardCVC" class="input" maxlength="4" required></div>
+                </div>
+                <div class="field" style="margin-top:12px;"><label class="label">Name on Card</label><input id="cardName" class="input" required></div>
+                <div class="schedule-actions" style="margin-top:12px;">
+                    <button type="button" class="btn-secondary" id="cancelCard">Cancel</button>
+                    <button type="submit" class="btn-primary">Pay & Book</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <h2 style="margin-top:0;color:var(--ink);">Appointment Booked Successfully!</h2>
+            <p>We’ve sent a confirmation email to you.</p>
+            <div style="margin-top:8px;"><strong>Appointment ID:</strong> <span id="appointmentId">—</span></div>
+            <div style="display:flex;gap:8px;margin-top:14px;">
+                <a class="btn-primary" href="@Url.Action("Index","Home")" style="text-decoration:none;display:inline-block;">Back to Home</a>
+                <button type="button" class="btn-secondary" onclick="window.print()">Print Confirmation</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+          // ---- endpoints ----
+          const API_SPECIALTIES = '/api/doctors/specialties?sort=alpha';
+          const API_DOCTOR_SEARCH = '/api/doctors/search';
+          const API_DUTIES = '@Url.Action("Duties","Appointment")';
+          const API_FEE = '@Url.Action("FeePreview","Appointment")';
+          const API_CREATE = '@Url.Action("Create","Appointment")';
+          const RTOKEN = document.querySelector('meta[name="request-verification-token"]').content;
+
+          // ---- elements ----
+          const stepsEl = document.getElementById('steps');
+          const step1 = document.getElementById('step1');
+          const step2 = document.getElementById('step2');
+          const step3 = document.getElementById('step3');
+
+          const inputSearch = document.getElementById('appointmentDoctorSearch');
+          const btnSearch = document.getElementById('appointmentSearchBtn');
+          const specialtySelect = document.getElementById('specialtySelect');
+          const doctorSelection = document.getElementById('doctorSelection');
+          const btnNext1 = document.getElementById('btnNext1');
+
+          const scheduleBody = document.getElementById('scheduleBody');
+          const selectedDoctorInfo = document.getElementById('selectedDoctorInfo');
+          const backTo1 = document.getElementById('backTo1');
+          const btnNext2 = document.getElementById('btnNext2');
+
+          const confirmDoctor = document.getElementById('confirmDoctor');
+          const confirmSpecialty = document.getElementById('confirmSpecialty');
+          const confirmEmail = document.getElementById('confirmEmail');
+          const confirmBranch = document.getElementById('confirmBranch');
+          const confirmDate = document.getElementById('confirmDate');
+          const confirmTime = document.getElementById('confirmTime');
+          const confirmFee = document.getElementById('confirmFee');
+
+          const patientForm = document.getElementById('patientForm');
+          const bookBtn = document.getElementById('bookAppointmentBtn');
+          const backTo2 = document.getElementById('backTo2');
+
+          const modalPay = document.getElementById('paymentMethodModal');
+          const modalCard = document.getElementById('cardPaymentModal');
+          const modalSuccess = document.getElementById('successModal');
+          const paymentFeeLine = document.getElementById('paymentFeeLine');
+          const payWithCardBtn = document.getElementById('payWithCard');
+          const payCashBtn = document.getElementById('payCash');
+          const cardForm = document.getElementById('cardPaymentForm');
+          const cancelCard = document.getElementById('cancelCard');
+          const appointmentIdEl = document.getElementById('appointmentId');
+
+          // ---- state ----
+          let doctors = [];
+          let selectedDoctor = null;
+          let selectedSlot = null;
+          let fee = 0;
+
+          // ---- helpers ----
+          const show = el => el.classList.remove('hidden');
+          const hide = el => el.classList.add('hidden');
+          const activateStep = n => {
+            stepsEl.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            const t = stepsEl.querySelector(`.step[data-step="${n}"]`); if (t) t.classList.add('active');
+          };
+          const esc = s => (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+          const openModal = el => el.classList.add('visible');
+          const closeModal = el => el.classList.remove('visible');
+
+          // ---- step 1 ----
+          async function loadSpecialties(){
+            const r = await fetch(API_SPECIALTIES, { credentials:'same-origin' });
+            if (!r.ok) return;
+            const data = await r.json();
+            while (specialtySelect.options.length > 1) specialtySelect.remove(1);
+            (data.items || []).forEach(it => {
+              const opt = document.createElement('option');
+              opt.value = it.id; opt.textContent = `${it.name} (${it.count})`;
+              specialtySelect.appendChild(opt);
+            });
+          }
+
+          async function searchDoctors(){
+            const url = new URL(window.location.origin + API_DOCTOR_SEARCH);
+            const q = inputSearch.value.trim();
+            if (q) url.searchParams.set('q', q);
+            if (specialtySelect.value) url.searchParams.set('specialtyId', specialtySelect.value);
+            const r = await fetch(url, { credentials:'same-origin' });
+            const list = r.ok ? await r.json() : [];
+            doctors = list || [];
+            renderDoctorCards();
+          }
+
+          function renderDoctorCards(){
+            doctorSelection.innerHTML = '';
+            btnNext1.disabled = true;
+            selectedDoctor = null;
+
+            if (!doctors.length){
+              doctorSelection.innerHTML = `<div class="empty-state">No doctors found.</div>`;
+              return;
+            }
+
+            doctors.forEach(d => {
+              const card = document.createElement('div');
+              card.className = 'doctor-card';
+              const initials = (d.fullName || 'DR').split(' ').filter(Boolean).map(x=>x[0]).join('').slice(0,2).toUpperCase();
+              card.innerHTML = `
+                <div class="doctor-card-header">
+                  <div class="doctor-avatar">${initials}</div>
+                  <div class="doctor-main">
+                    <h4 class="doctor-name">${esc(d.fullName || 'Doctor')}</h4>
+                    <div class="doctor-speciality">${esc(d.speciality || '')}</div>
+                  </div>
+                </div>
+                <div class="doctor-bio">${d.bio ? esc(d.bio) : '—'}</div>
+                <div class="doctor-actions">
+                  <button type="button" class="btn-secondary btn-preview">Preview</button>
+                  <button type="button" class="btn-primary btn-select">Select</button>
+                </div>`;
+              card.querySelector('.btn-preview').addEventListener('click', () => {
+                alert(`${d.fullName}\n${d.speciality || ''}\n\n${d.bio || ''}`);
+              });
+              card.querySelector('.btn-select').addEventListener('click', () => {
+                document.querySelectorAll('.doctor-card.selected').forEach(el => el.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedDoctor = d;
+                btnNext1.disabled = false;
+              });
+              doctorSelection.appendChild(card);
+            });
+          }
+
+          // ---- step 2 ----
+          async function loadDuties(doctorId){
+            scheduleBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#6b7280;">Loading...</td></tr>`;
+            const r = await fetch(`${API_DUTIES}?doctorId=${doctorId}`, { credentials:'same-origin' });
+            const duties = r.ok ? await r.json() : [];
+            renderDuties(duties);
+          }
+
+          function renderDuties(duties){
+            scheduleBody.innerHTML = '';
+            btnNext2.disabled = true;
+            selectedSlot = null;
+
+            if (!duties || !duties.length){
+              scheduleBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#6b7280;">No duty schedule found.</td></tr>`;
+              return;
+            }
+
+            duties.forEach((s, i) => {
+              const tr = document.createElement('tr');
+              tr.className = 'slot';
+              tr.dataset.index = i.toString();
+              tr.innerHTML = `<td>${s.date}</td><td>${s.start}</td><td>${s.end}</td><td>${esc(s.branch || '')}</td>`;
+              tr.addEventListener('click', () => {
+                document.querySelectorAll('tr.slot').forEach(r => r.classList.remove('selected'));
+                tr.classList.add('selected');
+                selectedSlot = s;
+                btnNext2.disabled = false;
+              });
+              scheduleBody.appendChild(tr);
+            });
+          }
+
+          // ---- step 3 ----
+          async function refreshFee(){
+            const r = await fetch(`${API_FEE}?doctorId=${selectedDoctor.id}`, { credentials:'same-origin' });
+            const p = r.ok ? await r.json() : { fee: 0 };
+            fee = p.fee || 0;
+            confirmFee.textContent = `$${fee.toFixed(2)}`;
+            paymentFeeLine.textContent = `Consultation Fee: $${fee.toFixed(2)}`;
+          }
+
+          function fillConfirmation(){
+            confirmDoctor.textContent = selectedDoctor.fullName || 'Doctor';
+            confirmSpecialty.textContent = selectedDoctor.speciality || (selectedDoctor.specialtyName || '—');
+            confirmEmail.textContent = selectedDoctor.email || '—';
+            confirmBranch.textContent = selectedSlot.branch || '—';
+            confirmDate.textContent = selectedSlot.date;
+            confirmTime.textContent = `${selectedSlot.start} - ${selectedSlot.end}`;
+          }
+
+          async function submitBooking(paymentChoice, card = null){
+            // validate
+            if (!patientForm.checkValidity()){ patientForm.reportValidity(); return; }
+            if (!document.getElementById('confirmCheckbox').checked){
+              alert('Please confirm the appointment details.'); return;
+            }
+
+            const fd = new FormData();
+            fd.append('DoctorId', selectedDoctor.id);
+            fd.append('DutyDate', selectedSlot.date);   // yyyy-MM-dd
+            fd.append('StartTime', selectedSlot.start); // HH:mm
+            fd.append('EndTime', selectedSlot.end);     // HH:mm
+            fd.append('Branch', selectedSlot.branch || '');
+
+            fd.append('PatientName', document.getElementById('patientName').value.trim());
+            fd.append('PatientEmail', document.getElementById('patientEmail').value.trim());
+            fd.append('PatientPhone', document.getElementById('patientPhone').value.trim());
+            fd.append('ReasonNote', document.getElementById('visitReason').value.trim());
+
+            fd.append('PaymentChoice', paymentChoice);
+            if (paymentChoice === 'card' && card){
+              fd.append('CardNumber', card.number);
+              fd.append('CardName', card.name);
+              fd.append('CardExp', card.exp);
+              fd.append('CardCvc', card.cvc);
+            }
+
+            const res = await fetch(API_CREATE, {
+              method:'POST',
+              body: fd,
+              headers: { 'RequestVerificationToken': RTOKEN, 'Accept':'application/json' },
+              credentials: 'same-origin'
+            });
+
+            if (!res.ok){
+              const t = await res.text();
+              alert(t || 'Booking failed.');
+              return;
+            }
+
+            // Expect JSON { ok: true, id: <int> }
+            let data = {};
+            try { data = await res.json(); } catch {}
+            if (data && data.ok){
+              appointmentIdEl.textContent = data.id || '—';
+            }
+            openModal(modalSuccess);
+          }
+
+          // ---- events ----
+          btnSearch.addEventListener('click', searchDoctors);
+          inputSearch.addEventListener('keyup', e => { if (e.key === 'Enter') searchDoctors(); });
+          specialtySelect.addEventListener('change', searchDoctors);
+
+          btnNext1.addEventListener('click', async () => {
+            if (!selectedDoctor) return;
+            hide(step1); show(step2); activateStep(2);
+            selectedDoctorInfo.textContent = `${selectedDoctor.fullName || 'Doctor'} · ${selectedDoctor.speciality || ''}`;
+            await loadDuties(selectedDoctor.id);
+          });
+
+          backTo1.addEventListener('click', () => { hide(step2); show(step1); activateStep(1); });
+          btnNext2.addEventListener('click', async () => {
+            if (!selectedSlot) return;
+            hide(step2); show(step3); activateStep(3);
+            fillConfirmation();
+            await refreshFee();
+          });
+
+          backTo2.addEventListener('click', () => { hide(step3); show(step2); activateStep(2); });
+
+          // payment flow
+          bookBtn.addEventListener('click', () => {
+            if (!patientForm.checkValidity()){ patientForm.reportValidity(); return; }
+            paymentFeeLine.textContent = `Consultation Fee: $${fee.toFixed(2)}`;
+            openModal(modalPay);
+          });
+          payCashBtn.addEventListener('click', async () => { closeModal(modalPay); await submitBooking('cash'); });
+          payWithCardBtn.addEventListener('click', () => { closeModal(modalPay); cardForm.reset(); openModal(modalCard); });
+          cancelCard.addEventListener('click', () => closeModal(modalCard));
+          cardForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const card = {
+              number: document.getElementById('cardNumber').value.replace(/\s+/g,''),
+              exp: document.getElementById('cardExpiry').value,
+              cvc: document.getElementById('cardCVC').value,
+              name: document.getElementById('cardName').value
+            };
+            closeModal(modalCard);
+            await submitBooking('card', card);
+          });
+
+          // close modals on backdrop click
+          [modalPay, modalCard, modalSuccess].forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m); }));
+
+          // init
+          (async () => { await loadSpecialties(); await searchDoctors(); })();
+        })();
+    </script>

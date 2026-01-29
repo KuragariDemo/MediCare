@@ -1,0 +1,191 @@
+﻿@{
+    ViewData["Title"] = "Appointment Payment Management";
+    Layout = "_AdminLayout";
+}
+
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+
+@{
+    var antiForgeryToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+}
+
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    @await Html.PartialAsync("_AdminSidebar")
+
+    <!-- Main -->
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Admin Dashboard</h1>
+                <p>Hospital Management Overview</p>
+            </div>
+            <div class="header-right">
+                <div class="user-profile">
+                    <div class="user-avatar">AD</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="section-content active">
+            <div class="content-section">
+                <div class="section-header">
+                    <h2>💰 Appointment Payment Management</h2>
+                </div>
+
+                <div class="controls-bar">
+                    <div class="search-bar-wide">
+                        <input type="text" id="searchInput" class="form-input"
+                               placeholder="Search Patient Name, Email, or Phone...">
+                    </div>
+
+                    <!-- ✅ Payment Method Dropdown -->
+                    <div class="payment-filter">
+                        <span class="switch-label">Filter by Payment Method:</span>
+                        <select id="paymentFilter" class="form-select">
+                            <option value="Both" selected>Both</option>
+                            <option value="CashAtClinic">Cash at Clinic</option>
+                            <option value="Card">Card</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="appointment-table">
+                        <thead>
+                            <tr>
+                                <th>Patient Name</th>
+                                <th>Email</th>
+                                <th>Ph Number</th>
+                                <th>Booked Date</th>
+                                <th>Payment Method</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                                <th>Report</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointmentTableBody">
+                            <tr><td colspan="7">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const body = document.getElementById("appointmentTableBody");
+            const searchInput = document.getElementById("searchInput");
+            const filterSelect = document.getElementById("paymentFilter");
+            const antiToken = '@antiForgeryToken';
+
+            let allAppointments = [];
+
+            // Fetch appointment/payment rows
+            async function loadData() {
+                body.innerHTML = `<tr><td colspan="8">Loading...</td></tr>`;
+                const res = await fetch("/Admin/Dashboard/List", {
+                    headers: { "Accept": "application/json" }
+                });
+                allAppointments = await res.json();
+                render();
+            }
+
+            // Render table rows
+            function render() {
+                const q = searchInput.value.toLowerCase();
+                const selectedMethod = filterSelect.value;
+
+                const filtered = allAppointments.filter(x => {
+                    const matchSearch =
+                        (x.patientName     || '').toLowerCase().includes(q) ||
+                        (x.patientEmail    || '').toLowerCase().includes(q) ||
+                        (x.patientPhone    || '').toLowerCase().includes(q);
+
+                    const matchMethod =
+                        selectedMethod === "Both" || x.method === selectedMethod;
+
+                    return matchSearch && matchMethod;
+                });
+
+                if (!filtered.length) {
+                    body.innerHTML = `<tr><td colspan="8">No matching results.</td></tr>`;
+                    return;
+                }
+
+                body.innerHTML = filtered.map(x => `
+                    <tr>
+                        <td>${x.patientName ?? ''}</td>
+                        <td>${x.patientEmail ?? ''}</td>
+                        <td>${x.patientPhone ?? ''}</td>
+                        <td>${x.created ?? ''}</td>
+                        <td>${x.method ?? ''}</td>
+                        <td>
+                            <span class="status ${x.status === "Paid" ? "paid" : "pending"}">
+                                ${x.status ?? ''}
+                            </span>
+                        </td>
+
+                        <td>
+                            ${
+                                x.status === "Pending" && x.method === "CashAtClinic"
+                                ? `<button class="btn-approve" data-id="${x.id}">Mark as Paid</button>`
+                                : `<span class="text-muted">—</span>`
+                            }
+                        </td>
+
+                        <td>
+                            <button class="btn-report"
+                                    data-id="${x.id}">
+                                📄 Report
+                            </button>
+                        </td>
+                    </tr>
+                `).join("");
+
+                // hook "Mark as Paid"
+                document.querySelectorAll(".btn-approve").forEach(btn => {
+                    btn.addEventListener("click", async e => {
+                        const id = e.target.dataset.id;
+                        if (!confirm("Mark this appointment as paid?")) return;
+
+                        const res = await fetch(`/Appointment/MarkPaid/${id}`, {
+                            method: "POST",
+                            headers: {
+                                'RequestVerificationToken': antiToken,
+                                'Accept': 'application/json'
+                            },
+                            credentials: 'same-origin'
+                        });
+
+                        const json = await res.json();
+                        if (json.ok) {
+                            alert("Marked as Paid ✅");
+                            loadData();
+                        } else {
+                            alert(json.error || "Error updating payment");
+                        }
+                    });
+                });
+
+                // hook Report button
+                document.querySelectorAll(".btn-report").forEach(btn => {
+                    btn.addEventListener("click", e => {
+                        const id = e.target.getAttribute("data-id");
+
+                        window.location = `/Admin/Dashboard/ReportCsv/${id}`;
+                    });
+                });
+            }
+
+            // Listeners
+            searchInput.addEventListener("input", render);
+            filterSelect.addEventListener("change", render);
+
+            await loadData();
+        });
+    </script>
+}

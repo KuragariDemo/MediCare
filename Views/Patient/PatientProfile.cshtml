@@ -1,0 +1,236 @@
+﻿@model MediCare.App.ViewModels.Patient.PatientProfileVM
+
+@{
+    ViewData["Title"] = "My Profile";
+    Layout = "_PatientLayout";
+
+    var safeModel = Model ?? new MediCare.App.ViewModels.Patient.PatientProfileVM
+    {
+        PatientId = 0,
+        UserId = "",
+        FullName = "Patient",
+        Email = "",
+        PhoneNumber = "",
+        Address = "",
+        DateOfBirth = null,
+        Gender = "",
+        DisplayName = "Patient",
+        Initials = "PT",
+        StatusMessage = null
+    };
+}
+
+<div class="dashboard-container">
+    @await Html.PartialAsync("_PatientSidebar")
+
+    <main class="dashboard-main">
+
+        <!-- DASHBOARD HEADER -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Welcome, @safeModel.DisplayName!</h1>
+                <p>Your personal information and account preferences</p>
+            </div>
+
+            <div class="header-right">
+                <!-- Notifications -->
+                <button class="notification-btn" type="button" title="Notifications">
+                    <span>🔔</span>
+                    <span class="notification-badge">3</span>
+                </button>
+
+                <!-- User mini card -->
+                <div class="user-profile">
+                    <div class="user-avatar">@safeModel.Initials</div>
+                    <div class="user-info">
+                        <p class="user-name">@safeModel.DisplayName</p>
+                        <p class="user-role">Patient ID: #@safeModel.PatientId</p>
+                    </div>
+                </div>
+
+                <form class="logout-form"
+                      asp-controller="Account"
+                      asp-action="Logout"
+                      method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="logout-btn" title="Sign out">
+                        <span style="margin-right:6px;">🚪</span> Logout
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <!-- PROFILE EDIT CARD -->
+        <section class="section-card mx-auto max-w-4xl">
+            <header style="margin-bottom:1.5rem;">
+                <h2 class="text-2xl font-bold" style="margin:0;">My Profile</h2>
+                <p class="text-sm" style="color:var(--text-muted); margin-top:0.25rem;">
+                    Review and update your personal information.
+                </p>
+            </header>
+
+            <!-- SUCCESS MESSAGE -->
+            <div id="status-message"
+                 class="alert-success @(string.IsNullOrWhiteSpace(safeModel.StatusMessage) ? "hidden" : "")">
+                <i data-lucide="check-circle" class="icon-small"></i>
+                <span>
+                    @(string.IsNullOrWhiteSpace(safeModel.StatusMessage)
+                        ? "Your profile has been updated successfully!"
+                        : safeModel.StatusMessage)
+                </span>
+            </div>
+
+            <!-- FORM -->
+            <form asp-action="Index"
+                  asp-controller="PatientProfile"
+                  method="post"
+                  enctype="multipart/form-data">
+
+                @Html.AntiForgeryToken()
+
+                <!-- hidden keys -->
+                <input type="hidden" asp-for="PatientId" />
+                <input type="hidden" asp-for="UserId" />
+
+                <!-- AVATAR UPLOAD -->
+                <div class="profile-avatar-upload">
+                    <div class="current-avatar" id="profile-picture-display">
+                        @safeModel.Initials
+                        @* if you later store patient photo url, replace above with:
+                           <img src="@safeModel.ProfileImageUrl" alt="Profile" />
+                        *@
+                    </div>
+
+                    <label for="avatar-upload" class="upload-btn">
+                        <i data-lucide="upload" class="icon-small"></i>
+                        Change Photo
+                        <input type="file"
+                               id="avatar-upload"
+                               name="AvatarFile"
+                               accept="image/*"
+                               class="hidden"
+                               onchange="previewAvatar(event)" />
+                    </label>
+                </div>
+
+                <!-- Full Name -->
+                <div class="form-group">
+                    <label asp-for="FullName" class="control-label">Full Name</label>
+                    <input asp-for="FullName"
+                           class="form-input"
+                           placeholder="Enter your full name" />
+                    <span asp-validation-for="FullName" class="text-danger"></span>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label asp-for="Email" class="control-label">Email Address</label>
+                    <input asp-for="Email"
+                           class="form-input"
+                           placeholder="Enter your email address"
+                           type="email" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <!-- Phone -->
+                <div class="form-group">
+                    <label asp-for="PhoneNumber" class="control-label">Phone Number</label>
+                    <input asp-for="PhoneNumber"
+                           class="form-input"
+                           placeholder="Enter your phone number"
+                           type="tel" />
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+
+                <!-- Address -->
+                <div class="form-group">
+                    <label asp-for="Address" class="control-label">Address</label>
+                    <textarea asp-for="Address"
+                              rows="2"
+                              class="form-input"
+                              placeholder="Enter your full address"></textarea>
+                    <span asp-validation-for="Address" class="text-danger"></span>
+                </div>
+
+                <!-- ROW: DOB + Gender -->
+                <div class="form-row">
+                    <div class="form-group m-0">
+                        <label asp-for="DateOfBirth" class="control-label">Date of Birth</label>
+                        <input asp-for="DateOfBirth"
+                               class="form-input"
+                               type="date" />
+                        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                    </div>
+
+                    @{
+                        var genderOptions = new List<SelectListItem>
+                                        {
+                                        new SelectListItem { Value = "", Text = "Select..." },
+                                        new SelectListItem { Value = "Male", Text = "Male" },
+                                        new SelectListItem { Value = "Female", Text = "Female" },
+                                        new SelectListItem { Value = "Other", Text = "Other" }
+                                        };
+                    }
+                    <div class="form-group m-0">
+                        <label asp-for="Gender" class="control-label">Gender</label>
+                        <select asp-for="Gender" class="form-input" asp-items="genderOptions"></select>
+                        <span asp-validation-for="Gender" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- SAVE BUTTON -->
+                <div class="form-group" style="margin-top:2rem;">
+                    <button type="submit" class="btn btn-primary save-btn">
+                        <i data-lucide="save" class="icon-small mr-2"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </section>
+
+    </main>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <!-- lucide icons (optional, for the upload + save icons) -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+
+        // Preview avatar locally (no upload to server yet)
+        function previewAvatar(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = e => {
+                const container = document.getElementById("profile-picture-display");
+                container.innerHTML = "";
+                const img = document.createElement("img");
+                img.src = e.target.result;
+                img.alt = "New Profile";
+                container.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+
+    <!-- If you want to force-show success after POST redirect,
+         backend should set StatusMessage in VM.
+         This little block just unhides the alert if text exists -->
+    <script>
+        (function () {
+            const box = document.getElementById("status-message");
+            if (box) {
+                const hasMsg = box.querySelector("span")?.textContent?.trim().length > 0;
+                if (hasMsg) {
+                    box.classList.remove("hidden");
+                }
+            }
+        })();
+    </script>
+}

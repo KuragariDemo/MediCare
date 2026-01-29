@@ -1,0 +1,414 @@
+﻿@{
+    ViewData["Title"] = "Clinic Branches Management";
+    Layout = "_AdminLayout";
+}
+
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+@functions {
+    string AntiXsrf() => Xsrf.GetAndStoreTokens(Context).RequestToken!;
+}
+
+<!-- anti-forgery token for fetch -->
+<meta name="request-verification-token" content="@AntiXsrf()" />
+
+<div class="dashboard-container">
+    @await Html.PartialAsync("_AdminSidebar")
+
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Admin Dashboard</h1>
+                <p>Doctor Specialty Management</p>
+            </div>
+        </header>
+
+        <div class="specialty-container">
+            <div class="specialty-header">
+                <h2>Doctor Specialties</h2>
+                <button id="addSpecialtyBtn" class="btn btn-primary">
+                    <span>➕</span>
+                    <span>Add New Specialty</span>
+                </button>
+            </div>
+
+            <div class="specialty-list" id="specialtyList">
+                <div class="empty-state hidden" id="emptyState">
+                    <div class="empty-state-icon">🏥</div>
+                    <h3>No Specialties Found</h3>
+                    <p>Click 'Add New Specialty' to get started.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ===========================================
+     ADD SPECIALTY MODAL
+     =========================================== -->
+<div class="add-specialty-modal hidden" id="addSpecialtyModal">
+    <div class="add-specialty-box">
+        <div class="add-specialty-header">
+            <h2>Add New Specialty</h2>
+            <button class="close-add-modal" onclick="closeAddSpecialtyModal()">×</button>
+        </div>
+
+        <form id="addSpecialtyForm">
+            <div class="form-group">
+                <label for="addSpecialtyName">Specialty Name</label>
+                <input type="text" id="addSpecialtyName" class="form-input" placeholder="e.g., Cardiology" required />
+            </div>
+
+            <div class="form-group">
+                <label for="addSpecialtyFee">Consultation Fee (THB)</label>
+                <input type="number" id="addSpecialtyFee" class="form-input" placeholder="e.g., 800.00" step="0.01" min="0" required />
+                <small class="hint">This fee will apply to all doctors with this specialty.</small>
+            </div>
+
+            <div class="specialty-modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeAddSpecialtyModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Specialty</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===========================================
+     EDIT SPECIALTY MODAL
+     =========================================== -->
+<div class="edit-specialty-modal hidden" id="editSpecialtyModal">
+    <div class="edit-specialty-box">
+        <div class="edit-specialty-header">
+            <h2>Edit Specialty</h2>
+            <button class="close-edit-modal" onclick="closeEditSpecialtyModal()">×</button>
+        </div>
+
+        <form id="editSpecialtyForm">
+            <input type="hidden" id="editSpecialtyId" />
+            <input type="hidden" id="editRowVersion" />
+
+            <div class="form-group">
+                <label for="editSpecialtyName">Specialty Name</label>
+                <input type="text" id="editSpecialtyName" class="form-input" required />
+            </div>
+
+            <div class="form-group">
+                <label for="editSpecialtyFee">Consultation Fee (THB)</label>
+                <input type="number" id="editSpecialtyFee" class="form-input" step="0.01" min="0" required />
+                <small class="hint">Changing this will affect all doctors in this specialty.</small>
+            </div>
+
+            <div class="specialty-modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeEditSpecialtyModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Update Specialty</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===========================================
+     DELETE SPECIALTY MODAL
+     =========================================== -->
+<div class="delete-specialty-modal hidden" id="deleteSpecialtyModal">
+    <div class="delete-specialty-box">
+        <div class="delete-specialty-header">
+            <h2>Confirm Deletion</h2>
+            <button class="close-delete-modal" onclick="closeDeleteSpecialtyModal()">×</button>
+        </div>
+
+        <div class="delete-specialty-body">
+            <h3>⚠️ Delete Specialty</h3>
+            <p>
+                Are you sure you want to delete:
+                <strong id="deleteSpecialtyName"></strong>?
+                This action cannot be undone.
+            </p>
+        </div>
+
+        <div class="specialty-modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeDeleteSpecialtyModal()">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteBtn">🗑️ Delete</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // =====================================================
+        // CONSTANTS
+        // =====================================================
+        const RTOKEN = document.querySelector('meta[name="request-verification-token"]').content;
+        const BASE = '@Url.Content("~/Admin/DoctorSpecialties")';
+        const qs = s => document.querySelector(s);
+
+        let specialties = [];
+        let currentDeleteId = null;
+
+        // =====================================================
+        // MODAL TOGGLERS
+        // (all are defensive: they check element first)
+        // =====================================================
+
+        // ADD
+        function openAddSpecialtyModal() {
+            const el = document.getElementById("addSpecialtyModal");
+            if (el) el.classList.remove("hidden");
+        }
+        function closeAddSpecialtyModal() {
+            const el = document.getElementById("addSpecialtyModal");
+            if (el) el.classList.add("hidden");
+        }
+
+        // EDIT
+        function openEditSpecialtyModal() {
+            const el = document.getElementById("editSpecialtyModal");
+            if (el) el.classList.remove("hidden");
+        }
+        function closeEditSpecialtyModal() {
+            const el = document.getElementById("editSpecialtyModal");
+            if (el) el.classList.add("hidden");
+        }
+
+        // DELETE
+        function openDeleteSpecialtyModal() {
+            const el = document.getElementById("deleteSpecialtyModal");
+            if (el) el.classList.remove("hidden");
+        }
+        function closeDeleteSpecialtyModal() {
+            const el = document.getElementById("deleteSpecialtyModal");
+            if (el) el.classList.add("hidden");
+        }
+
+        // =====================================================
+        // API HELPERS
+        // =====================================================
+        async function fetchJson(url, opts = {}) {
+            const res = await fetch(url, {
+                headers: { 'Accept': 'application/json' },
+                ...opts
+            });
+            if (!res.ok) throw new Error(await res.text());
+            return res.json();
+        }
+
+        async function loadList() {
+            const out = await fetchJson(`${BASE}/List`);
+            specialties = out.data || [];
+            renderSpecialties();
+        }
+
+        // create
+        async function createSpecialty(name, fee) {
+            const fd = new FormData();
+            fd.append('Name', name);
+            fd.append('Fee', (fee ?? 0).toString());
+
+            const res = await fetch(`${BASE}/Create`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': RTOKEN },
+                body: fd
+            });
+
+            if (!res.ok) throw new Error(await res.text());
+            return res.json();
+        }
+
+        // update (edit)
+        async function updateSpecialty(id, name, fee, rowVersion) {
+            const fd = new FormData();
+            fd.append('Name', name);
+            fd.append('Fee', (fee ?? 0).toString());
+            if (rowVersion) fd.append('RowVersion', rowVersion);
+
+            const res = await fetch(`${BASE}/Update/${id}`, {
+                method: 'PUT',
+                headers: { 'RequestVerificationToken': RTOKEN },
+                body: fd
+            });
+
+            if (!res.ok) throw new Error(await res.text());
+            return res.json();
+        }
+
+        // delete
+        async function deleteSpecialty(id) {
+            const res = await fetch(`${BASE}/Delete/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'RequestVerificationToken': RTOKEN,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!res.ok) throw new Error(await res.text());
+            return res.json();
+        }
+
+        // =====================================================
+        // RENDER LIST
+        // =====================================================
+        function renderSpecialties() {
+            const listContainer = document.getElementById('specialtyList');
+            const emptyState = document.getElementById('emptyState');
+            listContainer.innerHTML = '';
+
+            // update header count
+            const headerTitle = document.querySelector('.specialty-header h2');
+            if (headerTitle) {
+                headerTitle.textContent = `Doctor Specialties (${specialties.length})`;
+            }
+
+            if (specialties.length === 0) {
+                if (emptyState) {
+                    emptyState.classList.remove('hidden');
+                    listContainer.appendChild(emptyState);
+                }
+                return;
+            }
+            if (emptyState) emptyState.classList.add('hidden');
+
+            specialties.forEach(spec => {
+                const card = document.createElement('div');
+                card.className = 'specialty-item';
+                card.dataset.id = spec.id;
+
+                const feeText = (spec.fee ?? 0).toFixed(2);
+                const badgeHtml = spec.isActive
+                    ? '<span class="badge ok">Active</span>'
+                    : '<span class="badge off">Inactive</span>';
+
+                card.innerHTML = `
+                    <div class="specialty-info">
+                        <h3>${spec.name} ${badgeHtml}</h3>
+                        <div class="meta">Fee: <strong>${feeText}</strong></div>
+                    </div>
+
+                    <div class="specialty-actions">
+                        <button class="btn-icon-only btn-edit" data-action="edit" title="Edit">✏️</button>
+                        <button class="btn-icon-only btn-delete" data-action="delete" title="Delete">🗑️</button>
+                    </div>
+                `;
+
+                // edit click
+                card.querySelector('[data-action="edit"]').addEventListener('click', () => {
+                    openEditForSpec(spec.id);
+                });
+
+                // delete click
+                card.querySelector('[data-action="delete"]').addEventListener('click', () => {
+                    openDeleteForSpec(spec.id, spec.name);
+                });
+
+                listContainer.appendChild(card);
+            });
+        }
+
+        // helper to get specialty from array
+        function findSpec(id) {
+            return specialties.find(s => s.id === id);
+        }
+
+        // =====================================================
+        // OPEN EDIT WITH DATA
+        // =====================================================
+        function openEditForSpec(id) {
+            const spec = findSpec(id);
+            if (!spec) {
+                alert('Specialty not found.');
+                return;
+            }
+
+            // fill form
+            document.getElementById('editSpecialtyId').value = spec.id;
+            document.getElementById('editSpecialtyName').value = spec.name;
+            document.getElementById('editSpecialtyFee').value = (spec.fee ?? 0).toFixed(2);
+            document.getElementById('editRowVersion').value = spec.rowVersion || '';
+
+            openEditSpecialtyModal();
+        }
+
+        // =====================================================
+        // OPEN DELETE CONFIRM WITH DATA
+        // =====================================================
+        function openDeleteForSpec(id, name) {
+            currentDeleteId = id;
+
+            const nameEl = document.getElementById('deleteSpecialtyName');
+            if (nameEl) nameEl.textContent = name;
+
+            openDeleteSpecialtyModal();
+        }
+
+        // =====================================================
+        // PAGE SETUP (EVENT LISTENERS)
+        // =====================================================
+        (function setup() {
+            // open "Add"
+            document.getElementById('addSpecialtyBtn')
+                .addEventListener('click', () => {
+                    // reset add form
+                    document.getElementById('addSpecialtyName').value = '';
+                    document.getElementById('addSpecialtyFee').value = '';
+                    openAddSpecialtyModal();
+                });
+
+            // ADD form submit
+            document.getElementById('addSpecialtyForm')
+                .addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const name = document.getElementById('addSpecialtyName').value.trim();
+                    const fee = parseFloat(document.getElementById('addSpecialtyFee').value || '0') || 0;
+
+                    if (!name) { alert('Please enter a specialty name.'); return; }
+                    if (fee < 0) { alert('Fee cannot be negative.'); return; }
+
+                    try {
+                        await createSpecialty(name, fee);
+                        closeAddSpecialtyModal();
+                        await loadList();
+                    } catch (err) {
+                        alert(err.message || 'Failed to create specialty.');
+                    }
+                });
+
+            // EDIT form submit
+            document.getElementById('editSpecialtyForm')
+                .addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const id = document.getElementById('editSpecialtyId').value;
+                    const name = document.getElementById('editSpecialtyName').value.trim();
+                    const fee = parseFloat(document.getElementById('editSpecialtyFee').value || '0') || 0;
+                    const rowVersion = document.getElementById('editRowVersion').value;
+
+                    if (!name) { alert('Please enter a specialty name.'); return; }
+                    if (fee < 0) { alert('Fee cannot be negative.'); return; }
+
+                    try {
+                        await updateSpecialty(id, name, fee, rowVersion);
+                        closeEditSpecialtyModal();
+                        await loadList();
+                    } catch (err) {
+                        alert(err.message || 'Failed to update specialty.');
+                    }
+                });
+
+            // DELETE confirm button
+            document.getElementById('confirmDeleteBtn')
+                .addEventListener('click', async () => {
+                    if (!currentDeleteId) return;
+                    try {
+                        await deleteSpecialty(currentDeleteId);
+                        closeDeleteSpecialtyModal();
+                        currentDeleteId = null;
+                        await loadList();
+                    } catch (err) {
+                        alert(err.message || 'Delete failed.');
+                    }
+                });
+
+            // INITIAL DATA
+            loadList().catch(err => console.error('List error:', err));
+        })();
+    </script>
+}

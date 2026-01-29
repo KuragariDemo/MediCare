@@ -1,0 +1,252 @@
+﻿.branches-section {
+    padding: 80px 0;
+}
+
+.branches-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 40px;
+}
+
+.branch-card-detail {
+    background: white;
+    border-radius: 20px;
+    border: 2px solid #e0f2f7;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    animation: scaleIn 0.6s ease-out;
+}
+
+    .branch-card-detail:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 50px rgba(0, 168, 168, 0.2);
+        border-color: #00A8A8;
+    }
+
+.branch-header {
+    padding: 30px 30px 20px;
+    background: linear-gradient(135deg, #f8fcff 0%, #e8f5f7 100%);
+    position: relative;
+}
+
+.branch-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #00A8A8 0%, #00D9A5 100%);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.branch-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0a4d68;
+    margin: 0;
+}
+
+.branch-image-placeholder {
+    height: 200px;
+    background: linear-gradient(135deg, #e8f5f7 0%, #d4eef3 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+    .branch-image-placeholder::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(0, 168, 168, 0.1) 0%, rgba(0, 217, 165, 0.1) 100%);
+    }
+
+.branch-placeholder-icon {
+    font-size: 80px;
+    opacity: 0.3;
+    z-index: 1;
+}
+
+.branch-details {
+    padding: 30px;
+}
+
+.detail-item {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+    .detail-item:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+.detail-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #e8f5f7 0%, #d4eef3 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.branch-card-detail:hover .detail-icon {
+    background: linear-gradient(135deg, #00A8A8 0%, #00D9A5 100%);
+    transform: scale(1.1);
+}
+
+.detail-content {
+    flex: 1;
+}
+
+    .detail-content h4 {
+        font-size: 16px;
+        font-weight: 700;
+        color: #0a4d68;
+        margin-bottom: 8px;
+    }
+
+    .detail-content p {
+        font-size: 14px;
+        color: #2c5f7c;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+.hours-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hours-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #2c5f7c;
+    padding: 8px 12px;
+    background: #f8fcff;
+    border-radius: 8px;
+}
+
+    .hours-row.closed {
+        color: #ff4444;
+        background: #fff5f5;
+    }
+
+.services-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.service-tag {
+    display: inline-block;
+    background: linear-gradient(135deg, #e8f5f7 0%, #d4eef3 100%);
+    color: #00A8A8;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+    .service-tag:hover {
+        background: linear-gradient(135deg, #00A8A8 0%, #00D9A5 100%);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+.branch-actions {
+    padding: 0 30px 30px;
+    display: flex;
+    gap: 15px;
+}
+
+.branch-btn {
+    flex: 1;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+    .branch-btn.primary {
+        background: linear-gradient(135deg, #00A8A8 0%, #00D9A5 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 168, 168, 0.3);
+    }
+
+        .branch-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 168, 168, 0.4);
+        }
+
+    .branch-btn.secondary {
+        background: white;
+        border: 2px solid #e0f2f7;
+        color: #00A8A8;
+    }
+
+        .branch-btn.secondary:hover {
+            border-color: #00A8A8;
+            background: #e8f5f7;
+        }
+
+.footer-branches-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #b8e3ea;
+    text-decoration: none;
+    font-weight: 500;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+    .footer-branches-link:hover {
+        color: white;
+        gap: 12px;
+    }
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .branches-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .branch-actions {
+        flex-direction: column;
+    }
+}

@@ -1,0 +1,93 @@
+﻿
+@{
+    // fragment only — no Layout, no <html>, no <head>, no <link> tags
+    string? controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    string? action = ViewContext.RouteData.Values["action"]?.ToString();
+    Func<string, string, string> isActive = (c, a) =>
+        (string.Equals(controller, c, StringComparison.OrdinalIgnoreCase) &&
+         string.Equals(action, a, StringComparison.OrdinalIgnoreCase)) ? "active" : "";
+}
+
+<aside class="dashboard-sidebar">
+    <div class="sidebar-header">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2"></circle>
+            <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round"></path>
+        </svg>
+        <div>
+            <h3>ForestView</h3>
+            <p>Admin Portal</p>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <!-- DASHBOARD -->
+        <a asp-controller="Accounts" asp-action="Index"
+           class="nav-item @(isActive("Accounts", "Index"))">
+            <span class="nav-icon">📊</span>
+            <span>Dashboard</span>
+        </a>
+
+        <!-- PROFILE -->
+        <a asp-controller="Profile" asp-action="Index"
+           class="nav-item @(isActive("Profile", "Index"))">
+            <span class="nav-icon">👤</span>
+            <span>My Profile</span>
+        </a>
+
+        <!-- DOCTOR ACCOUNT CREATION -->
+        <a asp-controller="Accounts" asp-action="CreateDoctor"
+           class="nav-item @(isActive("Accounts", "CreateDoctor"))">
+            <span class="nav-icon">👨‍⚕️</span>
+            <span>Doctors Account Management</span>
+        </a>
+
+        <!-- ADMIN ACCOUNT CREATION -->
+        <a asp-controller="Accounts" asp-action="CreateAdmin"
+           class="nav-item @(isActive("Accounts", "CreateAdmin"))">
+            <span class="nav-icon">⚙️</span>
+            <span>Admin Accounts Management</span>
+        </a>
+
+        <!-- SCHEDULE MANAGEMENT -->
+        <a asp-controller="ScheduleManagement" asp-action="Index"
+           class="nav-item @(isActive("ScheduleManagement", "Index"))">
+            <span class="nav-icon">👥</span>
+            <span>Schedule Management</span>
+        </a>
+
+        <!-- DOCTOR SPECIALTIES -->
+        <a asp-controller="DoctorSpecialties" asp-action="Index"
+           class="nav-item @(isActive("DoctorSpecialties", "Index"))">
+            <span class="nav-icon">🩺</span>
+            <span>Doctor Specialty Management</span>
+        </a>
+
+        <!-- PATIENT APPOINTMENTS -->
+        <a asp-controller="Dashboard" asp-action="AppointmentTable"
+           class="nav-item @(isActive("Dashboard", "AppointmentTable"))">
+            <span class="nav-icon">🏥</span>
+            <span>Patient Appointment Table</span>
+        </a>
+
+        <!-- PATIENT Account -->
+        <a asp-controller="Dashboard" asp-action="AppointmentTable"
+           class="nav-item @(isActive("Dashboard", "AppointmentTable"))">
+            <span class="nav-icon">🏥</span>
+            <span>Patients</span>
+        </a>
+
+        <!-- CLINIC BRANCHES -->
+        <a asp-controller="ClinicBranches" asp-action="Index"
+           class="nav-item @(isActive("ClinicBranches", "Index"))">
+            <span class="nav-icon">🏥</span>
+            <span>Clinic Branches Management</span>
+        </a>
+
+
+    </nav>
+
+    <div class="sidebar-footer">
+        <a asp-controller="Home" asp-action="Index" class="logout-btn"><span>🚪</span><span>Back to Website</span></a>
+    </div>
+</aside>

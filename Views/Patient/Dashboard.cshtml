@@ -1,0 +1,175 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+    <div class="dashboard-container">
+        @await Html.PartialAsync("_PatientSidebar")
+
+        <main class="dashboard-main">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <h1>Welcome, John Doe!</h1>
+                    <p>Manage your health records and appointments</p>
+                </div>
+                <div class="header-right">
+                    <button class="notification-btn">
+                        <span>🔔</span>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <div class="user-profile">
+                        <div class="user-avatar">JD</div>
+                        <div class="user-info">
+                            <p class="user-name">John Doe</p>
+                            <p class="user-role">Patient ID: #12345</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content" id="home-section">
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button class="quick-action-btn" onclick="window.location.href='@Url.Action("Index", "Appointment")'">
+                        <span class="action-icon">📅</span><span>Book Appointment</span>
+                    </button>
+                    <button class="quick-action-btn" onclick="showToast('View Prescriptions feature coming soon!', 'info')">
+                        <span class="action-icon">📋</span><span>View Prescriptions</span>
+                    </button>
+                    <button class="quick-action-btn" onclick="window.location.href='@Url.Action("Messages", "Patient")'">
+                        <span class="action-icon">💬</span><span>Message Doctor</span>
+                    </button>
+                    <button class="quick-action-btn" onclick="window.location.href='@Url.Action("Medications", "Patient")'">
+                        <span class="action-icon">💊</span><span>Order Medicine</span>
+                    </button>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card highlight">
+                        <div class="stat-icon blue">📅</div>
+                        <div class="stat-info">
+                            <h3>Next Appointment</h3>
+                            <p>Dec 20, 2024 - 10:00 AM</p>
+                            <small>Dr. Sarah Johnson - Cardiology</small>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">🧪</div>
+                        <div class="stat-info">
+                            <h3>2</h3>
+                            <p>Pending Lab Results</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red">💳</div>
+                        <div class="stat-info">
+                            <h3>$150</h3>
+                            <p>Unpaid Bills</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">💊</div>
+                        <div class="stat-info">
+                            <h3>3</h3>
+                            <p>Active Prescriptions</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Appointments -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Upcoming Appointments</h2>
+                        <button class="btn-primary" onclick="window.location.href='@Url.Action("Index", "Appointment")'">Book New</button>
+                    </div>
+
+                    <div class="appointments-list">
+                        <div class="appointment-card">
+                            <div class="appointment-date">
+                                <div class="date-day">20</div>
+                                <div class="date-month">DEC</div>
+                            </div>
+                            <div class="appointment-details">
+                                <h4>Dr. Sarah Johnson</h4>
+                                <p>Cardiology - Regular Checkup</p>
+                                <div class="appointment-meta">
+                                    <span>⏰ 10:00 AM</span>
+                                    <span>📍 Banasree Branch</span>
+                                </div>
+                            </div>
+                            <div class="appointment-actions">
+                                <button class="btn-secondary" onclick="showToast('Reschedule feature coming soon!', 'info')">Reschedule</button>
+                                <button class="btn-danger" onclick="showToast('Cancel feature coming soon!', 'info')">Cancel</button>
+                            </div>
+                        </div>
+
+                        <div class="appointment-card">
+                            <div class="appointment-date">
+                                <div class="date-day">22</div>
+                                <div class="date-month">DEC</div>
+                            </div>
+                            <div class="appointment-details">
+                                <h4>Dr. Albert Simmons</h4>
+                                <p>Neurology - Follow-up</p>
+                                <div class="appointment-meta">
+                                    <span>⏰ 02:00 PM</span>
+                                    <span>📍 Dhanmondi Branch</span>
+                                </div>
+                            </div>
+                            <div class="appointment-actions">
+                                <button class="btn-secondary" onclick="showToast('Reschedule feature coming soon!', 'info')">Reschedule</button>
+                                <button class="btn-danger" onclick="showToast('Cancel feature coming soon!', 'info')">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Lab Results -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Recent Lab Results</h2>
+                        <button class="btn-secondary" onclick="window.location.href='@Url.Action("Lab", "Patient")'">View All</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Test Name</th>
+                                    <th>Date</th>
+                                    <th>Doctor</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Blood Test</td>
+                                    <td>Dec 15, 2024</td>
+                                    <td>Dr. Sarah Johnson</td>
+                                    <td><span class="status-badge ready">Ready</span></td>
+                                    <td><button class="action-btn" onclick="showToast('View Report feature coming soon!', 'info')">View Report</button></td>
+                                </tr>
+                                <tr>
+                                    <td>ECG</td>
+                                    <td>Dec 14, 2024</td>
+                                    <td>Dr. Sarah Johnson</td>
+                                    <td><span class="status-badge ready">Ready</span></td>
+                                    <td><button class="action-btn" onclick="showToast('View Report feature coming soon!', 'info')">View Report</button></td>
+                                </tr>
+                                <tr>
+                                    <td>X-Ray</td>
+                                    <td>Dec 13, 2024</td>
+                                    <td>Dr. Mike Brown</td>
+                                    <td><span class="status-badge pending">Processing</span></td>
+                                    <td><button class="action-btn" disabled>Pending</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div><!-- /.dashboard-content -->
+        </main>
+    </div><!-- /.dashboard-container -->
+

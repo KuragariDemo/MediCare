@@ -1,0 +1,268 @@
+﻿@{
+    ViewData["Title"] = "My Profile";
+    Layout = "_AdminLayout";
+
+    // Values passed in by ProfileController.Index()
+    var fullName = ViewBag.FullName as string ?? "Admin User";
+    var email = ViewBag.Email as string ?? "";
+    var roleDisplay = ViewBag.Role as string ?? "Administrator"; // pretty label
+    var roleRaw = ViewBag.RoleRaw as string ?? "Admin";           // raw role name
+
+    // Helper to build initials safely
+    string MakeInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "AD";
+
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length == 1)
+        {
+            // just first letter of the single word
+            return parts[0].Substring(0, 1).ToUpperInvariant();
+        }
+
+        // first letter of first word + first letter of last word
+        var first = parts[0].Substring(0, 1).ToUpperInvariant();
+        var last = parts[^1].Substring(0, 1).ToUpperInvariant();
+        return first + last;
+    }
+
+    var initials = MakeInitials(fullName);
+}
+
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    @await Html.PartialAsync("_AdminSidebar")
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+
+        <!-- Header (same style as other admin pages) -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Admin Dashboard</h1>
+                <p>Hospital Management Overview</p>
+            </div>
+            <div class="header-right">
+                <button class="notification-btn" type="button">
+                    <span>🔔</span>
+                    <span class="notification-badge">8</span>
+                </button>
+                <div class="user-profile">
+                    <div class="user-avatar">@initials</div>
+                    <div class="user-info">
+                        <p class="user-name">@fullName</p>
+                        <p class="user-role">@roleDisplay</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Flash messages -->
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert-banner alert-error">@TempData["Error"]</div>
+        }
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert-banner alert-success">@TempData["Success"]</div>
+        }
+
+        <!-- Profile Section -->
+        <div id="admin-profile-section" class="content-section">
+
+            <!-- Section header -->
+            <div class="section-header">
+                <h2>✨ Admin Account Settings</h2>
+
+                <div class="section-actions">
+                    <!-- Default state: just "Edit Profile" -->
+                    <button id="btnEdit" class="btn-primary" type="button">✏️ Edit Profile</button>
+
+                    <!-- When editing: show Cancel + Save -->
+                    <div id="editActions" class="hidden section-actions">
+                        <button id="btnCancel" class="btn-secondary" type="button">Cancel</button>
+                        <button id="btnSave" class="btn-primary" type="submit" form="profileForm">💾 Save Changes</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3-column layout (Profile card | Form | Security/Logout) -->
+            <div class="profile-layout-grid">
+
+                <!-- LEFT CARD: avatar / summary -->
+                <div class="info-card user-card">
+                    <div class="profile-picture-container">
+                        <div class="profile-picture" id="profileInitials">@initials</div>
+
+                        <!-- Only clickable in edit mode -->
+                        <div class="upload-overlay hidden" id="uploadOverlay" onclick="handleProfilePictureUpload()">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M10 5V15M5 10H15"
+                                      stroke="white"
+                                      stroke-width="2"
+                                      stroke-linecap="round" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <h3 id="displayNameCard">@fullName</h3>
+                    <p class="user-role" id="displayRoleCard">@roleDisplay</p>
+
+                    <div class="card-divider"></div>
+
+                    <p class="info-label">Current Role Level</p>
+                    <span class="role-badge">
+                        @(roleRaw == "AdminPlus" ? "Full Admin Access" : "Standard Admin Access")
+                    </span>
+                </div>
+
+                <!-- MIDDLE CARD: editable personal info -->
+                <form id="profileForm"
+                      class="info-card profile-details-form"
+                      method="post"
+                      asp-controller="Profile"
+                      asp-action="Update"
+                      asp-route-area=""
+                      asp-antiforgery="true">
+
+                    <h4 class="card-title">Personal Information</h4>
+
+                    <div class="field-group">
+                        <label for="inputFullName">Full Name</label>
+                        <input class="form-input profile-edit-field"
+                               type="text"
+                               name="fullName"
+                               id="inputFullName"
+                               value="@fullName"
+                               data-initial-value="@fullName"
+                               disabled
+                               required />
+                    </div>
+
+                    <div class="field-group">
+                        <label for="inputEmail">Email Address</label>
+                        <input class="form-input profile-edit-field"
+                               type="email"
+                               name="email"
+                               id="inputEmail"
+                               value="@email"
+                               data-initial-value="@email"
+                               disabled
+                               required />
+                        <small class="hint hidden" id="emailHint">
+                            Changing email will also update your login username.
+                        </small>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="inputRole">System Role</label>
+                        <input class="form-input read-only-input"
+                               type="text"
+                               id="inputRole"
+                               value="@roleDisplay"
+                               disabled
+                               readonly />
+                    </div>
+                </form>
+
+                <!-- RIGHT CARD: security / logout -->
+                <div class="info-card actions-card">
+                    <h4 class="card-title">Account Security</h4>
+
+                    <button class="btn-secondary action-full-width"
+                            type="button"
+                            onclick="showToast('Change Password feature coming soon!')">
+                        🔑 Change Password
+                    </button>
+
+                    <div class="card-divider"></div>
+
+                    <h4 class="card-title">Logout</h4>
+                    <form id="logoutForm"
+                          method="post"
+                          asp-controller="Profile"
+                          asp-action="Logout"
+                          asp-route-area="">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                                class="btn-danger action-full-width">
+                            🔒 Logout
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <script>
+        // --- helpers ---
+        function showToast(msg) {
+            alert(msg);
+        }
+        function handleProfilePictureUpload() {
+            showToast('Profile picture upload coming soon!');
+        }
+
+        // buttons
+        const btnEdit       = document.getElementById('btnEdit');
+        const btnCancel     = document.getElementById('btnCancel');
+        const editActions   = document.getElementById('editActions');
+        const uploadOverlay = document.getElementById('uploadOverlay');
+        const emailHint     = document.getElementById('emailHint');
+
+        // all editable inputs
+        const editFields = document.querySelectorAll('.profile-edit-field');
+
+        function enterEditMode() {
+            // show cancel/save, hide "Edit"
+            btnEdit.classList.add('hidden');
+            editActions.classList.remove('hidden');
+
+            // enable inputs
+            editFields.forEach(f => {
+                f.disabled = false;
+            });
+
+            // show extra UI bits
+            uploadOverlay.classList.remove('hidden');
+            emailHint.classList.remove('hidden');
+        }
+
+        function exitEditMode(resetValues) {
+            // hide cancel/save, show "Edit"
+            editActions.classList.add('hidden');
+            btnEdit.classList.remove('hidden');
+
+            // disable inputs, maybe reset values
+            editFields.forEach(f => {
+                if (resetValues) {
+                    const original = f.getAttribute('data-initial-value');
+                    if (original !== null) {
+                        f.value = original;
+                    }
+                }
+                f.disabled = true;
+            });
+
+            // hide extras
+            uploadOverlay.classList.add('hidden');
+            emailHint.classList.add('hidden');
+        }
+
+        btnEdit.addEventListener('click', () => {
+            enterEditMode();
+        });
+
+        btnCancel.addEventListener('click', () => {
+            exitEditMode(true); // reset to original values
+        });
+
+        // Start page in read-only mode
+        exitEditMode(false);
+    </script>
+}

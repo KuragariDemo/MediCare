@@ -1,0 +1,323 @@
+﻿/* --- Color Variables & Global Styles --- */
+:root {
+    --primary: #00A8A8;
+    --primary-dark: #007A7A;
+    --danger: #FF5A58;
+    --danger-light: #FFEBEB;
+    --success-light: #EBFFEB;
+    --success-dark: #007A00;
+    --background: #f4f7f9;
+    --card-bg: #ffffff;
+    --text-dark: #1d2a33;
+    --text-muted: #5b6b75;
+    --border-color: #e3f1f6;
+    --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --shadow-primary: 0 4px 10px rgba(0, 168, 168, 0.2);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--background);
+    color: var(--text-dark);
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* --- Appointment Card Styling --- */
+.recent-appointments-card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow-light);
+    padding: 30px;
+    margin-top: 20px;
+}
+
+.recent-appointments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+}
+
+    .recent-appointments-header h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0;
+        transition: color 0.3s;
+    }
+
+        .recent-appointments-header h2:hover {
+            color: var(--primary);
+        }
+
+/* --- Search Bar Styling (Renamed) --- */
+.recent-appointment-search-bar-container {
+    margin-bottom: 25px;
+}
+
+.recent-appointment-modern-search-input {
+    width: 100%;
+    padding: 12px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    color: var(--text-dark);
+    background-color: var(--card-bg);
+}
+
+    .recent-appointment-modern-search-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(0, 168, 168, 0.2);
+        outline: none;
+    }
+
+/* --- Table Styling (Partial Renaming) --- */
+.recent-appointments-table-container {
+    overflow-x: auto;
+}
+
+.recent-appointments-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    min-width: 700px;
+}
+
+    .recent-appointments-table th,
+    .recent-appointments-table td {
+        padding: 15px 20px;
+        text-align: left;
+    }
+
+    .recent-appointments-table th {
+        font-size: 0.85rem;
+        color: var(--primary-dark);
+        font-weight: 700;
+        text-transform: uppercase;
+        border-bottom: 2px solid var(--primary);
+        transition: color 0.3s;
+    }
+
+        .recent-appointments-table th:hover {
+            color: var(--primary);
+        }
+
+    .recent-appointments-table tbody tr {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+        .recent-appointments-table tbody tr:hover {
+            box-shadow: var(--shadow-light);
+            transform: translateY(-2px);
+        }
+
+    .recent-appointments-table td {
+        font-size: 0.95rem;
+        color: var(--text-dark);
+    }
+
+    /* First and last cell rounding */
+    .recent-appointments-table tbody tr td:first-child {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+
+    .recent-appointments-table tbody tr td:last-child {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+/* Status Pills (Renamed) */
+.recent-appointment-status-pill {
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.recent-appointment-status-pill-submitted {
+    background-color: var(--primary);
+    color: var(--card-bg);
+    cursor: pointer;
+}
+
+    .recent-appointment-status-pill-submitted:hover {
+        opacity: 0.9;
+        transform: scale(1.05);
+    }
+
+.recent-appointment-status-pill-waiting {
+    background-color: var(--danger-light);
+    color: var(--danger);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.recent-appointment-status-pill-given {
+    background-color: var(--success-light);
+    color: var(--success-dark);
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+
+/* Action Buttons (Renamed) */
+.recent-appointment-action-link {
+    font-size: 0.9rem;
+    color: var(--primary);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s, text-decoration 0.2s;
+}
+
+    .recent-appointment-action-link:hover {
+        color: var(--primary-dark);
+        text-decoration: underline;
+    }
+
+/* Email link styling (Renamed) */
+.recent-appointment-email-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+    .recent-appointment-email-link:hover {
+        color: var(--primary);
+    }
+
+/* --- Modal Styling (Renamed) --- */
+.recent-appointment-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    padding-top: 50px;
+}
+
+.recent-appointment-modal-content {
+    background-color: var(--card-bg);
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.recent-appointment-close-button {
+    color: var(--text-muted);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+    .recent-appointment-close-button:hover,
+    .recent-appointment-close-button:focus {
+        color: var(--danger);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+/* --- ENHANCED FEEDBACK MODAL STYLES (Renamed) --- */
+
+/* Custom Header Styling for Feedback Modal */
+.recent-appointment-modal-header-fancy {
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+    .recent-appointment-modal-header-fancy h3 {
+        margin: 0;
+        color: var(--primary-dark);
+        font-size: 1.4rem;
+        display: flex;
+        align-items: center;
+    }
+
+.recent-appointment-icon-star {
+    font-size: 1.8rem;
+    color: #FFD700; /* Gold color for star */
+    margin-right: 10px;
+    line-height: 1;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Feedback Footer (for button and character counter) (Renamed) */
+.recent-appointment-feedback-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.recent-appointment-char-counter {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-style: italic;
+    transition: color 0.3s;
+}
+
+.recent-appointment-submit-btn {
+    background-color: var(--primary);
+    color: var(--card-bg);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    float: none;
+}
+
+    .recent-appointment-submit-btn:hover {
+        background-color: var(--primary-dark);
+        box-shadow: var(--shadow-primary);
+    }
+
+/* Utility */
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .recent-appointments-card {
+        padding: 15px;
+    }
+}

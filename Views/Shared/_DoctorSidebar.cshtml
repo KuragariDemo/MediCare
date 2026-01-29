@@ -1,0 +1,64 @@
+﻿
+@{
+    string currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    string currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
+
+    <aside class="dashboard-sidebar">
+        <div class="sidebar-header">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2"></circle>
+                <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round"></path>
+            </svg>
+            <div>
+                <h3>ForestView</h3>
+                <p>Doctor Portal</p>
+            </div>
+        </div>
+
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+        <a asp-route="DoctorDashboardHome"
+           class="nav-item @(currentController == "Doctors" && currentAction == "Dashboard" ? "active" : "")">
+            <span class="nav-icon">🏠</span><span>Home</span>
+        </a>
+
+        <a asp-route="DoctorDashboardProfile"
+           class="nav-item @(currentAction == "Profile" ? "active" : "")">
+            <span class="nav-icon">👤</span><span>Profile</span>
+        </a>
+
+        <a href="~/Doctors/DoctorSchedule"
+           class="nav-item @(currentController == "DoctorSchedule" ? "active" : "")">
+            <span class="nav-icon">📅</span><span>Schedule</span>
+        </a>
+
+        <a asp-route="DoctorDashboardLeaveRequests"
+           class="nav-item @(currentAction == "LeaveRequests" ? "active" : "")">
+            <span class="nav-icon">🗓️</span><span>Duty Block Requests</span>
+        </a>
+
+        <a asp-controller="DoctorAppointments"
+           asp-action="Index"
+           class="nav-item @(currentController == "DoctorAppointments" ? "active" : "")">
+            <span class="nav-icon">📋</span>
+            <span>Appointments</span>
+        </a>
+
+        <a asp-controller="DoctorPatients"
+           asp-action="Records"
+           class="nav-item @(currentController == "DoctorPatients" ? "active" : "")">
+            <span class="nav-icon">👥</span>
+            <span>Patient Records</span>
+        </a>
+
+    </nav>
+
+    <!-- Footer -->
+    <div class="sidebar-footer">
+        <a asp-controller="Home" asp-action="Index" class="logout-btn">
+            <span>🚪</span><span>Back to Website</span>
+        </a>
+    </div>
+</aside>

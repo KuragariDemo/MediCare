@@ -1,0 +1,213 @@
+﻿@using MediCare.Models
+@using MediCare.ViewModels.Branches
+@model ClinicBranchesIndexVm
+@{
+    ViewData["Title"] = "Clinic Branches Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="dashboard-container">
+    <!-- Sidebar -->
+@await Html.PartialAsync("_AdminSidebar")
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Admin Dashboard</h1>
+                <p>Hospital Management Overview</p>
+            </div>
+            <div class="header-right">
+                <button class="notification-btn">
+                    <span>🔔</span>
+                    <span class="notification-badge">8</span>
+                </button>
+                <div class="user-profile">
+                    <div class="user-avatar">AD</div>
+                    <div class="user-info">
+                        <p class="user-name">Admin User</p>
+                        <p class="user-role">System Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-section" id="clinic-branches-management-section">
+            <div class="clinic-branches-management-container">
+                <div class="clinic-branches-header">
+
+                    <!-- Search -->
+                    <form asp-controller="ClinicBranches" asp-action="Index" method="get" class="branches-controls" style="display:flex; gap:12px;">
+                        <input type="text" name="q" value="@Model.Query" placeholder="Search branch..." class="form-input search-input" />
+                        <button type="submit" class="btn-secondary">Search</button>
+                        <button type="button" id="btnShowCreate" class="btn-primary">Add New Branch</button>
+                    </form>
+                </div>
+
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert success">@TempData["Success"]</div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert danger">@TempData["Error"]</div>
+                }
+
+                <!-- Create / Edit panel (same form; JS fills for Edit) -->
+                <div id="branchFormPanel" class="profile-card hidden" style="margin:16px 0;">
+                    <form id="branchForm" method="post" class="form-grid"
+                          asp-controller="ClinicBranches"
+                          asp-action="Create">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Id" id="branchId" />
+                        <input type="hidden" name="page" value="@Model.Page" />
+                        <input type="hidden" name="q" value="@Model.Query" />
+
+                        <div class="form-group">
+                            <label>Branch Name</label>
+                            <input class="form-input" name="Name" id="branchName" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Address</label>
+                            <input class="form-input" name="Address" id="branchAddress" />
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input class="form-input" name="Phone" id="branchPhone" />
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input class="form-input" type="email" name="Email" id="branchEmail" />
+                        </div>
+
+                        <div class="form-group full-width" style="display:flex; gap:10px;">
+                            <button type="submit" class="btn-primary" id="branchSubmitBtn">Save</button>
+                            <button type="button" class="btn-secondary" id="btnCancelForm">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="clinic-branches-table-section">
+                    <div class="table-container">
+                        <table class="data-table" id="branchesTable">
+                            <thead>
+                                <tr>
+                                    <th>Branch ID</th>
+                                    <th>Branch Name</th>
+                                    <th>Address</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Items?.Any() == true)
+                                {
+                                    foreach (var b in Model.Items)
+                                    {
+                                        <tr>
+                                            <td>@b.Id</td>
+                                            <td>@b.Name</td>
+                                            <td>@b.Address</td>
+                                            <td>@b.Phone</td>
+                                            <td>@b.Email</td>
+                                            <td>
+                                                <div style="display:flex; gap:8px;">
+                                                    <button type="button"
+                                                            class="btn-secondary btnEdit"
+                                                            data-id="@b.Id"
+                                                            data-name="@b.Name"
+                                                            data-address="@b.Address"
+                                                            data-phone="@b.Phone"
+                                                            data-email="@b.Email">
+                                                        Edit
+                                                    </button>
+
+                                                    <form asp-controller="ClinicBranches" asp-action="Delete" method="post" onsubmit="return confirm('Delete this branch?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@b.Id" />
+                                                        <input type="hidden" name="q" value="@Model.Query" />
+                                                        <input type="hidden" name="page" value="@Model.Page" />
+                                                        <button class="btn-danger" type="submit">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="6" style="text-align:center; color:#666;">No branches found.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination">
+                        @{
+                            var prev = Math.Max(1, Model.Page - 1);
+                            var next = Math.Min(Model.TotalPages, Model.Page + 1);
+                        }
+                        <a class="pagination-btn prev" href="@Url.Action("Index", "ClinicBranches", new { q = Model.Query, page = prev })">‹</a>
+                        <span class="pagination-info">Page @Model.Page of @Model.TotalPages</span>
+                        <a class="pagination-btn next" href="@Url.Action("Index", "ClinicBranches", new { q = Model.Query, page = next })">›</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+   </main>
+@section Scripts {
+    <script>
+        const panel   = document.getElementById('branchFormPanel');
+        const form    = document.getElementById('branchForm');
+        const btnAdd  = document.getElementById('btnShowCreate');
+        const btnCancel = document.getElementById('btnCancelForm');
+        const submitBtn = document.getElementById('branchSubmitBtn');
+
+        const fldId = document.getElementById('branchId');
+        const fldName = document.getElementById('branchName');
+        const fldAddr = document.getElementById('branchAddress');
+        const fldPhone = document.getElementById('branchPhone');
+        const fldEmail = document.getElementById('branchEmail');
+
+        function showPanel() { panel.classList.remove('hidden'); }
+        function hidePanel() {
+            panel.classList.add('hidden');
+            // reset to Create mode
+            fldId.value = '';
+            fldName.value = '';
+            fldAddr.value = '';
+            fldPhone.value = '';
+            fldEmail.value = '';
+            form.setAttribute('action', '@Url.Action("Create", "ClinicBranches")');
+            submitBtn.textContent = 'Create';
+        }
+
+        btnAdd.addEventListener('click', () => {
+            // Create mode
+            hidePanel(); // ensure clean
+            showPanel();
+        });
+
+        btnCancel.addEventListener('click', hidePanel);
+
+        // Wire Edit buttons
+        document.querySelectorAll('.btnEdit').forEach(btn => {
+            btn.addEventListener('click', () => {
+                fldId.value = btn.dataset.id;
+                fldName.value = btn.dataset.name || '';
+                fldAddr.value = btn.dataset.address || '';
+                fldPhone.value = btn.dataset.phone || '';
+                fldEmail.value = btn.dataset.email || '';
+
+                // switch to Edit mode
+                form.setAttribute('action', '@Url.Action("Edit", "ClinicBranches")');
+                submitBtn.textContent = 'Update';
+
+                showPanel();
+            });
+        });
+    </script>
+}

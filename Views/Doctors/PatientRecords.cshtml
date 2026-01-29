@@ -1,0 +1,266 @@
+﻿@model MediCare.App.ViewModels.Doctor.PatientRecordPageVM
+
+@{
+    Layout = "_DoctorLayout"; // <- your doctor dashboard layout
+    ViewData["Title"] = "Patient Appointment Records";
+}
+
+<!-- Tailwind (if not already in _DoctorLayout). If already included globally, you can remove -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    @await Html.PartialAsync("_DoctorSidebar")
+
+    <!-- Main -->
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Doctor Dashboard</h1>
+                <p>Hospital Management Overview</p>
+            </div>
+            <div class="header-right">
+                <div class="user-profile">
+                    <div class="user-avatar">AD</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="patient-record-container">
+            <h1 class="text-3xl font-bold mb-6 text-center md:text-left" style="color: var(--primary);">
+                Patient Appointment Records
+            </h1>
+
+            <div class="patient-record-card">
+                <!-- Search -->
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <div class="w-full md:w-1/3 relative">
+                        <input type="text"
+                               id="patient-record-search"
+                               onkeyup="filterRecords()"
+                               placeholder="Search by name, email, or reason..."
+                               class="patient-record-input pl-10">
+                        <i data-lucide="search"
+                           class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full patient-record-table" id="patient-record-table">
+                        <thead>
+                            <tr>
+                                <th class="w-1/6">Patient Name</th>
+                                <th class="w-1/5 hidden sm:table-cell">Patient Email</th>
+                                <th class="w-1/5">Reason</th>
+                                <th class="w-1/6 hidden md:table-cell">Appointment Date</th>
+                                <th class="w-1/6 text-center">Feedback</th>
+                                <th class="w-1/6 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-100" id="patient-record-tbody">
+                            @foreach (var r in Model.Records)
+                            {
+                                var apptDateText = r.DutyDate.ToString("dd MMM yyyy");
+                                var apptTimeText = r.StartTime.ToString(@"hh\:mm");
+
+                                <tr class="patient-record-row-hover">
+                                    <td class="align-top">
+                                        <div class="font-semibold text-gray-800">@r.PatientName</div>
+                                        <div class="text-xs text-gray-400 md:hidden">@r.PatientEmail</div>
+                                    </td>
+
+                                    <td class="align-top hidden sm:table-cell text-gray-600">
+                                        @r.PatientEmail
+                                    </td>
+
+                                    <td class="align-top text-gray-700">
+                                        @(!string.IsNullOrWhiteSpace(r.ReasonNote) ? r.ReasonNote : "-")
+                                    </td>
+
+                                    <td class="align-top hidden md:table-cell text-gray-700">
+                                        <div>@apptDateText</div>
+                                        <div class="text-xs text-gray-400">@apptTimeText</div>
+                                    </td>
+
+                                    <td class="align-top text-center">
+                                        @if (r.HasFeedback && !string.IsNullOrWhiteSpace(r.FeedbackText))
+                                        {
+                                            <button class="patient-record-btn-feedback text-sm"
+                                                    onclick="openFeedbackModal('@r.PatientName', `@r.FeedbackText`)">
+                                                View Feedback
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="patient-record-btn-muted text-sm">
+                                                No feedback
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td class="align-top text-center">
+                                        <button class="patient-record-btn-primary text-sm"
+                                                onclick="openPrescriptionModal(@r.AppointmentId, '@r.PatientName', '@r.PatientEmail', `@r.PrescriptionText`)">
+                                            Give Prescription
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <p id="patient-record-no-results"
+                   class="text-center text-lg text-gray-500 py-8 hidden">
+                    No records found matching your search.
+                </p>
+            </div>
+        </div>
+
+        <!-- Feedback Modal -->
+        <div id="patient-record-feedback-modal" class="patient-record-modal-backdrop">
+            <div class="patient-record-modal-content">
+                <button onclick="closeModal('feedback')" class="patient-record-close-btn" aria-label="Close Feedback">
+                    <i data-lucide="x" class="h-6 w-6"></i>
+                </button>
+                <h2 class="text-2xl font-semibold mb-4" style="color: var(--primary);">Patient Feedback</h2>
+                <p class="text-sm text-gray-500 mb-4">
+                    Feedback from: <strong id="feedback-patient-name"></strong>
+                </p>
+                <div class="p-4 rounded-lg bg-gray-50 border border-gray-200">
+                    <p id="feedback-text" class="text-gray-700 leading-relaxed italic"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prescription Modal -->
+        <div id="patient-record-prescription-modal" class="patient-record-modal-backdrop">
+            <div class="patient-record-modal-content">
+                <button onclick="closeModal('prescription')" class="patient-record-close-btn" aria-label="Close Prescription">
+                    <i data-lucide="x" class="h-6 w-6"></i>
+                </button>
+
+                <h2 class="text-2xl font-semibold mb-4" style="color: var(--primary);">Give Prescription / Send Message</h2>
+                <p class="text-sm text-gray-500 mb-4">
+                    To: <strong id="prescription-patient-name"></strong>
+                    (<span id="prescription-patient-email"></span>)
+                </p>
+
+                <form id="prescription-form">
+                    @Html.AntiForgeryToken()
+
+                    <textarea id="prescription-text-area"
+                              rows="6"
+                              placeholder="Write prescription, advice, follow-up instructions..."
+                              class="patient-record-input w-full mb-4 resize-none"></textarea>
+
+                    <input type="hidden" id="prescription-appointment-id" />
+                </form>
+
+                <button onclick="sendPrescription()"
+                        class="patient-record-btn-primary w-full flex items-center justify-center">
+                    <i data-lucide="send" class="h-5 w-5 mr-2"></i>
+                    <span>Send Prescription</span>
+                </button>
+
+                <p id="prescription-status"
+                   class="mt-3 text-center text-sm hidden"></p>
+            </div>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <script>
+        // init lucide icons
+        lucide.createIcons();
+
+        // --- Search Filter (client-side text filter) ---
+        function filterRecords() {
+            const q = document.getElementById("patient-record-search").value.toLowerCase();
+            const tbody = document.getElementById("patient-record-tbody");
+            const rows = tbody.querySelectorAll("tr");
+            let anyVisible = false;
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const match = text.includes(q);
+                row.style.display = match ? "" : "none";
+                if (match) anyVisible = true;
+            });
+
+            document.getElementById("patient-record-no-results").classList.toggle("hidden", anyVisible);
+        }
+
+        // --- Feedback Modal ---
+        function openFeedbackModal(patientName, feedbackText) {
+            document.getElementById("feedback-patient-name").textContent = patientName;
+            document.getElementById("feedback-text").textContent = feedbackText;
+            document.getElementById("patient-record-feedback-modal").style.display = "flex";
+        }
+
+        // --- Prescription Modal ---
+        function openPrescriptionModal(appointmentId, patientName, patientEmail, existingText) {
+            document.getElementById("prescription-appointment-id").value = appointmentId;
+            document.getElementById("prescription-patient-name").textContent = patientName;
+            document.getElementById("prescription-patient-email").textContent = patientEmail;
+            document.getElementById("prescription-text-area").value = existingText || "";
+            document.getElementById("prescription-status").classList.add("hidden");
+            document.getElementById("patient-record-prescription-modal").style.display = "flex";
+        }
+
+        // --- Close Modals ---
+        function closeModal(which) {
+            if (which === "feedback") {
+                document.getElementById("patient-record-feedback-modal").style.display = "none";
+            } else if (which === "prescription") {
+                document.getElementById("patient-record-prescription-modal").style.display = "none";
+            }
+        }
+
+        // --- Send Prescription (AJAX -> SavePrescription) ---
+        async function sendPrescription() {
+            const appointmentId = document.getElementById("prescription-appointment-id").value;
+            const text = document.getElementById("prescription-text-area").value.trim();
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            if (!text) {
+                showStatus("Prescription cannot be empty.", false);
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append("appointmentId", appointmentId);
+                formData.append("text", text);
+
+                const res = await fetch("/Doctor/Patients/SavePrescription", {
+                    method: "POST",
+                    headers: {
+                        "RequestVerificationToken": token
+                    },
+                    body: formData
+                });
+
+                if (res.ok) {
+                    showStatus("Prescription sent / saved.", true);
+                } else {
+                    showStatus("Failed to save prescription.", false);
+                }
+            } catch (err) {
+                console.error(err);
+                showStatus("Error contacting server.", false);
+            }
+        }
+
+        function showStatus(msg, ok) {
+            const el = document.getElementById("prescription-status");
+            el.textContent = msg;
+            el.classList.remove("hidden");
+            el.style.color = ok ? "var(--primary-dark)" : "var(--danger)";
+            el.style.fontWeight = "600";
+        }
+    </script>
+}

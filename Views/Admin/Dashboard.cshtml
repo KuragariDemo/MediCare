@@ -1,0 +1,178 @@
+﻿@{
+    ViewData["Title"] = "Clinic Branches Management";
+    Layout = "_AdminLayout";
+}
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    @await Html.PartialAsync("_AdminSidebar")
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Admin Dashboard</h1>
+                <p>Hospital Management Overview</p>
+            </div>
+            <div class="header-right">
+                <button class="notification-btn">
+                    <span>🔔</span>
+                    <span class="notification-badge">8</span>
+                </button>
+                <div class="user-profile">
+                    <div class="user-avatar">AD</div>
+                    <div class="user-info">
+                        <p class="user-name">Admin User</p>
+                        <p class="user-role">System Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <!-- Dashboard Home Section -->
+            <div id="dashboard-section">
+                <!-- Stats Overview -->
+                <div class="stats-grid four-col">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">👨‍⚕️</div>
+                        <div class="stat-info">
+                            <h3>52</h3>
+                            <p>Total Doctors</p>
+                            <small class="stat-change positive">+3 this month</small>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">👥</div>
+                        <div class="stat-info">
+                            <h3>1,245</h3>
+                            <p>Total Patients</p>
+                            <small class="stat-change positive">+127 this month</small>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">📅</div>
+                        <div class="stat-info">
+                            <h3>89</h3>
+                            <p>Today's Appointments</p>
+                            <small class="stat-change">12 pending</small>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple">💰</div>
+                        <div class="stat-info">
+                            <h3>$45,230</h3>
+                            <p>Revenue (This Month)</p>
+                            <small class="stat-change positive">+12.5%</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <div class="section-header">
+                            <h2>Appointments Overview</h2>
+                            <select class="chart-filter">
+                                <option>This Week</option>
+                                <option>This Month</option>
+                                <option>This Year</option>
+                            </select>
+                        </div>
+                        <div class="chart-placeholder">
+                            <div class="chart-bar" style="height: 60%"></div>
+                            <div class="chart-bar" style="height: 80%"></div>
+                            <div class="chart-bar" style="height: 45%"></div>
+                            <div class="chart-bar" style="height: 90%"></div>
+                            <div class="chart-bar" style="height: 70%"></div>
+                            <div class="chart-bar" style="height: 85%"></div>
+                            <div class="chart-bar" style="height: 65%"></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="section-header">
+                            <h2>Department Distribution</h2>
+                        </div>
+                        <div class="department-stats">
+                            <div class="dept-item">
+                                <span class="dept-name">Cardiology</span>
+                                <div class="dept-bar"><div class="dept-fill" style="width: 85%"></div></div>
+                                <span class="dept-value">85%</span>
+                            </div>
+                            <div class="dept-item">
+                                <span class="dept-name">Neurology</span>
+                                <div class="dept-bar"><div class="dept-fill" style="width: 70%"></div></div>
+                                <span class="dept-value">70%</span>
+                            </div>
+                            <div class="dept-item">
+                                <span class="dept-name">Dentistry</span>
+                                <div class="dept-bar"><div class="dept-fill" style="width: 65%"></div></div>
+                                <span class="dept-value">65%</span>
+                            </div>
+                            <div class="dept-item">
+                                <span class="dept-name">Pediatrics</span>
+                                <div class="dept-bar"><div class="dept-fill" style="width: 55%"></div></div>
+                                <span class="dept-value">55%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Recent Activity</h2>
+                        <button class="btn-secondary">View All</button>
+                    </div>
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon blue">👨‍⚕️</div>
+                            <div class="activity-content">
+                                <p><strong>New Doctor Added</strong></p>
+                                <p>Dr. Michael Brown joined Cardiology department</p>
+                                <span class="activity-time">2 hours ago</span>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon green">✅</div>
+                            <div class="activity-content">
+                                <p><strong>Appointment Completed</strong></p>
+                                <p>John Doe's appointment with Dr. Sarah Johnson</p>
+                                <span class="activity-time">3 hours ago</span>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon orange">💰</div>
+                            <div class="activity-content">
+                                <p><strong>Payment Received</strong></p>
+                                <p>$250 payment from Jane Smith</p>
+                                <span class="activity-time">5 hours ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="content-section">
+                    <h2>Quick Actions</h2>
+                    <div class="admin-actions">
+                        <button class="admin-action-btn" onclick="showSection('doctor-creation-section')">
+                            <span>➕</span><span>Add New Doctor</span>
+                        </button>
+                        <button class="admin-action-btn" onclick="showToast('Register Patient feature coming soon!', 'info')">
+                            <span>👥</span><span>Register Patient</span>
+                        </button>
+                        <button class="admin-action-btn" onclick="showToast('Schedule Appointment feature coming soon!', 'info')">
+                            <span>📅</span><span>Schedule Appointment</span>
+                        </button>
+                        <button class="admin-action-btn" onclick="showToast('Generate Report feature coming soon!', 'info')">
+                            <span>📊</span><span>Generate Report</span>
+                        </button>
+                    </div>
+                </div>
+            </div><!-- /#dashboard-section -->
+        </div><!-- /.dashboard-content -->
+    </main>
+</div><!-- /.dashboard-container -->

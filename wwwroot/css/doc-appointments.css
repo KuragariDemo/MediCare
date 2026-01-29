@@ -1,0 +1,54 @@
+﻿
+:root {
+    --doc-appointment-primary: #00A8A8;
+    --doc-appointment-primary-dark: #007A7A;
+    --doc-appointment-danger: #FF5A58;
+    --doc-appointment-danger-light: #FFEBEB;
+    --doc-appointment-success-light: #EBFFEB;
+    --doc-appointment-success-dark: #007A00;
+    --doc-appointment-background: #f4f7f9;
+    --doc-appointment-card-bg: #ffffff;
+    --doc-appointment-text-dark: #1d2a33;
+    --doc-appointment-text-muted: #5b6b75;
+    --doc-appointment-border-color: #e3f1f6;
+    --doc-appointment-shadow-light: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --doc-appointment-shadow-primary: 0 4px 10px rgba(0, 168, 168, 0.2);
+}
+
+.doc-appointment-container {
+    background-color: var(--doc-appointment-background);
+    font-family: 'Inter', sans-serif;
+    color: var(--doc-appointment-text-dark);
+}
+
+.doc-appointment-card {
+    background-color: var(--doc-appointment-card-bg);
+    box-shadow: var(--doc-appointment-shadow-light);
+    border: 1px solid var(--doc-appointment-border-color);
+}
+
+.doc-appointment-search:focus-within,
+.doc-appointment-action-button:hover {
+    box-shadow: var(--doc-appointment-shadow-primary);
+}
+
+.doc-appointment-table th {
+    color: var(--doc-appointment-text-muted);
+    border-bottom: 2px solid var(--doc-appointment-border-color);
+}
+
+.doc-appointment-table td {
+    color: var(--doc-appointment-text-dark);
+    border-bottom: 1px solid var(--doc-appointment-border-color);
+}
+
+.doc-appointment-modal-overlay {
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    z-index: 50;
+}
+
+.doc-appointment-modal-content {
+    box-shadow: var(--doc-appointment-shadow-primary);
+}
+

@@ -1,0 +1,248 @@
+﻿@using MediCare.App.Models
+@model MediCare.App.ViewModels.Patient.RecentAppointmentsVM
+
+
+@{
+    ViewData["Title"] = "Recent Appointments";
+    Layout = "_PatientLayout";
+}
+
+<div class="dashboard-container">
+    <partial name="_PatientSidebar" />
+
+    <main class="dashboard-main">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Welcome, John Doe!</h1>
+                <p>Manage your health records and appointments</p>
+            </div>
+            <div class="header-right">
+                <button class="notification-btn">
+                    <span>🔔</span>
+                    <span class="notification-badge">3</span>
+                </button>
+                <div class="user-profile">
+                    <div class="user-avatar">JD</div>
+                    <div class="user-info">
+                        <p class="user-name">John Doe</p>
+                        <p class="user-role">Patient ID: #12345</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="recent-appointments-card">
+            <div class="recent-appointments-header">
+                <h2>Recent Appointments</h2>
+            </div>
+
+            <!-- 🔍 Search Bar -->
+            <div class="recent-appointment-search-bar-container">
+                <input type="text" id="appointment-search" placeholder="Search by doctor, specialty, or date..." class="recent-appointment-modern-search-input" />
+            </div>
+
+            <!-- 📋 Appointments Table -->
+            <div class="recent-appointments-table-container">
+                <table class="recent-appointments-table">
+                    <thead>
+                        <tr>
+                            <th>Appointment Date</th>
+                            <th>Doctor Name</th>
+                            <th>Specialty</th>
+                            <th>Doctor Email</th>
+                            <th>Prescriptions</th>
+                            <th>Feedback</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointments-table-body">
+                        @foreach (var row in Model.Appointments)
+                        {
+                            var apptDateText = row.DutyDate.ToString("dd MMM yyyy");
+                            var apptTimeRange = $"{row.StartTime:hh\\:mm} - {row.EndTime:hh\\:mm}";
+                            <tr>
+                                <td>
+                                    <div>@apptDateText</div>
+                                    <div style="font-size:.8rem; color:var(--text-muted);">@apptTimeRange</div>
+                                </td>
+
+                                <td>@row.DoctorName</td>
+
+                                <td>@row.DoctorSpecialty</td>
+
+                                <td>
+                                    <a class="recent-appointment-email-link" href="mailto:@row.DoctorEmail">
+                                        @row.DoctorEmail
+                                    </a>
+                                </td>
+
+                                <td>
+                                    @if (row.HasPrescription && !string.IsNullOrWhiteSpace(row.PrescriptionText))
+                                    {
+                                        <span class="recent-appointment-status-pill recent-appointment-status-pill-submitted"
+                                              onclick="openPrescriptionModal('@apptDateText', '@row.DoctorName', `@row.PrescriptionText`)">
+                                            Submitted
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="recent-appointment-status-pill recent-appointment-status-pill-waiting">
+                                            Waiting
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <a class="recent-appointment-action-link"
+                                       onclick="openFeedbackModal('@row.DoctorName', @row.AppointmentId, `@row.ExistingFeedbackText`)">
+                                        Give Feedback
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+                <p id="no-results-message" style="display:none; text-align:center; color:var(--text-muted); padding:20px;">
+                    No appointments found matching your search criteria.
+                </p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- 🧾 Prescription Modal -->
+<div id="prescription-modal" class="recent-appointment-modal">
+    <div class="recent-appointment-modal-content">
+        <span class="recent-appointment-close-button" onclick="closeModal('prescription-modal')">&times;</span>
+        <h3>Prescription Details</h3>
+        <p class="mb-4">
+            <strong>Appointment Date:</strong> <span id="pres-date"></span><br />
+            <strong>Doctor:</strong> <span id="pres-doctor"></span>
+        </p>
+        <div id="prescription-content"></div>
+    </div>
+</div>
+
+<!-- 💬 Feedback Modal -->
+<div id="feedback-modal" class="recent-appointment-modal">
+    <div class="recent-appointment-modal-content">
+        <span class="recent-appointment-close-button" onclick="closeModal('feedback-modal')">&times;</span>
+        <div class="recent-appointment-modal-header-fancy">
+            <h3><span class="recent-appointment-icon-star">&#9733;</span> Share Your Experience</h3>
+        </div>
+        <p class="mb-4" id="feedback-context"></p>
+        <form id="feedback-form">
+            @Html.AntiForgeryToken()
+            <textarea id="feedback-text"
+                      placeholder="Share your experience and provide feedback for the doctor (max 500 characters)..."
+                      maxlength="500"></textarea>
+            <div class="recent-appointment-feedback-footer">
+                <span id="char-count" class="recent-appointment-char-counter">0 / 500 characters</span>
+                <button type="button" class="recent-appointment-submit-btn" onclick="submitFeedback()">Submit Feedback</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        // 🔍 Search filter
+        const searchInput = document.getElementById("appointment-search");
+        const tableBody = document.getElementById("appointments-table-body");
+        const noResultsMessage = document.getElementById("no-results-message");
+
+        searchInput.addEventListener("input", function () {
+            const query = this.value.toLowerCase();
+            const rows = tableBody.querySelectorAll("tr");
+            let anyVisible = false;
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const visible = text.includes(query);
+                row.style.display = visible ? "" : "none";
+                if (visible) anyVisible = true;
+            });
+
+            noResultsMessage.style.display = anyVisible ? "none" : "block";
+        });
+
+        // 🧾 Prescription Modal
+        function openPrescriptionModal(date, doctor, content) {
+            document.getElementById("pres-date").innerText = date;
+            document.getElementById("pres-doctor").innerText = doctor;
+            document.getElementById("prescription-content").innerHTML = `<p>${content}</p>`;
+            document.getElementById("prescription-modal").style.display = "block";
+        }
+
+                // 💬 Feedback Modal
+        let currentAppointmentId = null;
+
+        function openFeedbackModal(doctorName, appointmentId, existingText) {
+            currentAppointmentId = appointmentId;
+
+            document.getElementById("feedback-context").innerText =
+                `Provide your feedback for Dr. ${doctorName}`;
+
+            // preload existing feedback if available:
+            document.getElementById("feedback-text").value = existingText || "";
+
+            // update character counter with initial text length
+            const initialLen = (existingText ? existingText.length : 0);
+            document.getElementById("char-count").textContent = `${initialLen} / 500 characters`;
+
+            // show modal
+            document.getElementById("feedback-modal").style.display = "block";
+        }
+
+        // ✏️ Character counter
+        document.getElementById("feedback-text").addEventListener("input", function () {
+            const count = this.value.length;
+            document.getElementById("char-count").textContent = `${count} / 500 characters`;
+        });
+
+        // 🚀 Submit Feedback
+        async function submitFeedback() {
+            const text = document.getElementById("feedback-text").value.trim();
+            if (!text) {
+                alert("Please enter your feedback before submitting.");
+                return;
+            }
+
+            // read anti-forgery token that Razor injected
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            // we MUST send FormData because controller expects [FromForm]
+            const formData = new FormData();
+            formData.append("appointmentId", currentAppointmentId);
+            formData.append("feedbackText", text);
+
+            try {
+                const response = await fetch(`/Patient/Appointments/SubmitFeedback`, {
+                    method: "POST",
+                    headers: {
+                        "RequestVerificationToken": token // MVC will validate this
+                        // NOTE: do NOT set "Content-Type" manually when using FormData.
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert("Feedback submitted successfully!");
+                    closeModal('feedback-modal');
+                } else {
+                    alert("Failed to submit feedback.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error submitting feedback.");
+            }
+        }
+
+        // ❌ Close modal
+        function closeModal(id) {
+            document.getElementById(id).style.display = "none";
+        }
+    </script>
+}

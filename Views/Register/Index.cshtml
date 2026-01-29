@@ -1,0 +1,173 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - ForestView Hospital</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="auth.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-page">
+        <div class="auth-container">
+            <div class="auth-left">
+                <div class="auth-brand">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2" />
+                        <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <div>
+                        <h1><strong>ForestView</strong></h1>
+                        <p>Hospital</p>
+                    </div>
+                </div>
+                <div class="auth-illustration">
+                    <div class="illustration-circle"></div>
+                    <div class="illustration-text">
+                        <h2>Join Us Today!</h2>
+                        <p>Create an account to access our comprehensive healthcare services</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-right">
+                <div class="auth-form-container">
+                    <div class="auth-header">
+                        <h2>Create Account</h2>
+                        <p>Fill in your details to get started</p>
+                    </div>
+
+                    <form class="auth-form" id="registerForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">First Name</label>
+                                <div class="input-wrapper">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="input-icon">
+                                        <circle cx="10" cy="7" r="3" stroke="#00A8A8" stroke-width="1.5" />
+                                        <path d="M5 15c0-2.5 2-4 5-4s5 1.5 5 4" stroke="#00A8A8" stroke-width="1.5" stroke-linecap="round" />
+                                    </svg>
+                                    <input type="text" id="firstName" placeholder="First name" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="lastName">Last Name</label>
+                                <div class="input-wrapper">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="input-icon">
+                                        <circle cx="10" cy="7" r="3" stroke="#00A8A8" stroke-width="1.5" />
+                                        <path d="M5 15c0-2.5 2-4 5-4s5 1.5 5 4" stroke="#00A8A8" stroke-width="1.5" stroke-linecap="round" />
+                                    </svg>
+                                    <input type="text" id="lastName" placeholder="Last name" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="regEmail">Email Address</label>
+                            <div class="input-wrapper">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="input-icon">
+                                    <path d="M3 4h14a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="#00A8A8" stroke-width="1.5" />
+                                    <path d="M2 5l8 5 8-5" stroke="#00A8A8" stroke-width="1.5" stroke-linecap="round" />
+                                </svg>
+                                <input type="email" id="regEmail" placeholder="Enter your email" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <div class="input-wrapper">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="input-icon">
+                                    <path d="M6 3h8a1 1 0 011 1v12a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="#00A8A8" stroke-width="1.5" />
+                                    <path d="M10 14h.01" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                                </svg>
+                                <input type="tel" id="phone" placeholder="Enter your phone number" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="regPassword">Password</label>
+                            <div class="input-wrapper">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="input-icon">
+                                    <rect x="4" y="9" width="12" height="8" rx="1" stroke="#00A8A8" stroke-width="1.5" />
+                                    <path d="M7 9V6a3 3 0 016 0v3" stroke="#00A8A8" stroke-width="1.5" stroke-linecap="round" />
+                                </svg>
+                                <input type="password" id="regPassword" placeholder="Create a password" required>
+                                <button type="button" class="toggle-password" onclick="togglePassword('regPassword')">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <path d="M10 7a3 3 0 100 6 3 3 0 000-6z" stroke="#999" stroke-width="1.5" />
+                                        <path d="M10 3C5 3 2 10 2 10s3 7 8 7 8-7 8-7-3-7-8-7z" stroke="#999" stroke-width="1.5" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="password-strength" id="passwordStrength"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm Password</label>
+                            <div class="input-wrapper">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="input-icon">
+                                    <rect x="4" y="9" width="12" height="8" rx="1" stroke="#00A8A8" stroke-width="1.5" />
+                                    <path d="M7 9V6a3 3 0 016 0v3" stroke="#00A8A8" stroke-width="1.5" stroke-linecap="round" />
+                                </svg>
+                                <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
+                            </div>
+                        </div>
+
+                        <div class="form-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="terms" required>
+                                <span>I agree to the <a href="#">Terms & Conditions</a></span>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="auth-submit-btn">
+                            Create Account
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M5 10h10M12 7l3 3-3 3" stroke="white" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                        </button>
+
+                        <div class="auth-divider">
+                            <span>or continue with</span>
+                        </div>
+
+                        <div class="social-login">
+                            <button type="button" class="social-btn">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M10 0C4.477 0 0 4.477 0 10c0 4.991 3.657 9.128 8.438 9.879V12.89h-2.54V10h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V10h2.773l-.443 2.89h-2.33v6.989C16.343 19.129 20 14.99 20 10c0-5.523-4.477-10-10-10z" fill="#1877F2" />
+                                </svg>
+                                Facebook
+                            </button>
+                            <button type="button" class="social-btn">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z" fill="#4285F4" />
+                                    <path d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.71 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z" fill="#34A853" />
+                                    <path d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07A9.973 9.973 0 000 10c0 1.61.39 3.14 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z" fill="#FBBC05" />
+                                    <path d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.29 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z" fill="#EA4335" />
+                                </svg>
+                                Google
+                            </button>
+                        </div>
+
+                        <div class="auth-footer">
+                            <p>Already have an account? <a href="login.html">Log in here</a></p>
+                        </div>
+                    </form>
+
+                    <a href="index.html" class="back-home">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M15 10H5M8 7l-3 3 3 3" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                        Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,842 @@
+﻿@using System.Text.Json
+@using MediCare.App.Models
+@{
+
+    ViewData["Title"] = "Clinic Branches Management";
+    Layout = "_AdminLayout";
+
+    var branchesLite = ((IEnumerable<ClinicBranch>)ViewBag.Branches ?? new List<ClinicBranch>())
+        .Select(b => new { id = b.Id, name = b.Name });
+    var branchesJson = JsonSerializer.Serialize(branchesLite);
+}
+
+<div class="dashboard-container">
+    @await Html.PartialAsync("_AdminSidebar")
+
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Admin Dashboard</h1>
+                <p>Hospital Management Overview</p>
+            </div>
+            <div class="header-right">
+                <div class="user-profile">
+                    <div class="user-avatar">AD</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- SCHEDULE MANAGEMENT SECTION -->
+        <div class="section-content active" id="schedule-management-section">
+            <div class="schedule-management-container">
+                <div class="schedule-header">
+                    <h2>
+                        Manage Doctor Schedules
+                        <span class="day-highlight" id="todayDayName">(Sunday)</span>
+                    </h2>
+                </div>
+
+                <div class="schedule-header-controls">
+                    <div class="search-bar-small">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="search-icon">
+                            <circle cx="9" cy="9" r="6" stroke="#00A8A8" stroke-width="2"></circle>
+                            <path d="M13 13L17 17" stroke="#00A8A8" stroke-width="2" stroke-linecap="round"></path>
+                        </svg>
+                        <input type="text" placeholder="Search doctor..." class="search-input-small" id="doctorScheduleSearch">
+                        <button class="search-btn-small" id="doctorSearchBtn">Search</button>
+                    </div>
+
+                    <div class="schedule-controls">
+                        <select class="form-input" id="scheduleDoctorSelect">
+                            <option value="">Select Doctor</option>
+                        </select>
+                        <button class="btn-primary" id="assignDutyOpenBtn">Assign Duty</button>
+                    </div>
+                </div>
+
+                <!-- Doctors table -->
+                <div class="schedule-doctor-table-section">
+                    <h3>Doctors</h3>
+                    <div class="table-container">
+                        <table class="data-table" id="doctorsScheduleTable">
+                            <thead>
+                                <tr>
+                                    <th>Dr. Name</th>
+                                    <th>Specialty</th>
+                                    <th>Dr. Email</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS loads -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination">
+                        <button class="pagination-btn prev">‹</button>
+                        <span class="pagination-info">Page 1 of 1</span>
+                        <button class="pagination-btn next">›</button>
+                    </div>
+                </div>
+
+                <!-- Assignments table -->
+                <div class="schedule-assignments-table-section">
+                    <div class="section-header">
+                        <h2>Assignments</h2>
+                        <div class="search-bar-small">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="search-icon">
+                                <circle cx="9" cy="9" r="6" stroke="#00A8A8" stroke-width="2"></circle>
+                                <path d="M13 13L17 17" stroke="#00A8A8" stroke-width="2" stroke-linecap="round"></path>
+                            </svg>
+                            <input type="text" placeholder="Search assignments..." class="search-input-small" id="assignmentSearch">
+                            <button class="search-btn-small" id="assignmentSearchBtn">Search</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table" id="assignmentsTable">
+                            <thead>
+                                <tr>
+                                    <th>Doctor Name</th>
+                                    <th>Branch</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Hours</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS loads -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination">
+                        <button class="pagination-btn prev">‹</button>
+                        <span class="pagination-info">Page 1 of 1</span>
+                        <button class="pagination-btn next">›</button>
+                    </div>
+                </div>
+
+                <!-- Block Requests table -->
+                <div class="schedule-block-requests-table-section">
+                    <div class="section-header">
+                        <h2>Pending Block Requests</h2>
+                        <div class="search-bar-small">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="search-icon">
+                                <circle cx="9" cy="9" r="6" stroke="#00A8A8" stroke-width="2"></circle>
+                                <path d="M13 13L17 17" stroke="#00A8A8" stroke-width="2" stroke-linecap="round"></path>
+                            </svg>
+                            <input type="text" placeholder="Search requests..." class="search-input-small" id="blockRequestSearch">
+                            <button class="search-btn-small" id="blockRequestSearchBtn">Search</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table" id="blockRequestsTable">
+                            <thead>
+                                <tr>
+                                    <th>Dr. Name</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Reason</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS loads -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination">
+                        <button class="pagination-btn prev">‹</button>
+                        <span class="pagination-info">Page 1 of 1</span>
+                        <button class="pagination-btn next">›</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Check Duty Hours Modal -->
+<div class="modal" id="checkDutyHourModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Check Duty Hours</h2>
+            <button class="close-modal-btn" onclick="closeModal('checkDutyHourModal')">❌</button>
+        </div>
+        <div class="modal-body">
+            <h3 id="checkDutyDoctorName">Dr. [Doctor Name]</h3>
+            <div class="form-group">
+                <label for="dutyWeekDate">Week of:</label>
+                <input type="date" id="dutyWeekDate" class="form-input">
+            </div>
+            <button class="btn-primary" id="checkDutyBtn">Check</button>
+            <div class="assigned-hours-display">
+                <h4>Assigned Hours:</h4>
+                <textarea id="assignedHoursText" rows="5" class="form-input" readonly>No assignments for this week.</textarea>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Duty Modal -->
+<div class="modal" id="assignDutyModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Assign Duty</h2>
+            <button class="close-modal-btn" onclick="closeModal('assignDutyModal')">❌</button>
+        </div>
+        <div class="modal-body">
+            <h3 id="assignDutyDoctorName" class="text-center">Dr. [Doctor Name]</h3>
+            <p id="assignDutyDoctorSpecialty" class="text-center">Specialty: [Specialty]</p>
+
+            <form id="assignDutyForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="assignBranch">Branch</label>
+                        <select id="assignBranch" class="form-input" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="assignDate">Date</label>
+                        <input type="date" id="assignDate" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="assignStartTime">Start Hour</label>
+                        <input type="time" id="assignStartTime" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="assignEndTime">End Hour</label>
+                        <input type="time" id="assignEndTime" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('assignDutyModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Assign Duty</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View/Edit Assignment Modal -->
+<div class="modal" id="editAssignmentModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Assignment Details</h2>
+            <button class="close-modal-btn" onclick="closeModal('editAssignmentModal')">❌</button>
+        </div>
+        <div class="modal-body">
+            <form id="editAssignmentForm">
+                <input type="hidden" id="eaAssignmentId">
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Doctor</label>
+                        <select id="eaDoctorId" class="form-input" required></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Branch</label>
+                        <select id="eaBranchId" class="form-input" required></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Start</label>
+                        <input type="datetime-local" id="eaStart" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>End</label>
+                        <input type="datetime-local" id="eaEnd" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Hours</label>
+                        <input type="text" id="eaHours" class="form-input" readonly>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('editAssignmentModal')">Close</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ------- GLOBAL HELPERS -------
+        function byId(id){ return document.getElementById(id); }
+
+        function openModal(id){
+            const el = byId(id);
+            if (el) el.classList.add('visible');
+        }
+        function closeModal(id){
+            const el = byId(id);
+            if (el) el.classList.remove('visible');
+        }
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+
+        document.addEventListener("DOMContentLoaded", () => {
+
+            // ---------- STATE ----------
+            const state = {
+                doctors: { page: 1, pageSize: 10, q: "" },
+                assignments: { page: 1, pageSize: 10, q: "" },
+                requests: { page: 1, pageSize: 10, q: "" },
+                selectedDoctor: null,
+                branches: @Html.Raw(branchesJson)
+            };
+
+            // ---------- HELPERS ----------
+            function escapeHtml(str){
+                if (str == null) return '';
+                return String(str)
+                    .replaceAll('&','&amp;')
+                    .replaceAll('<','&lt;')
+                    .replaceAll('>','&gt;')
+                    .replaceAll('"','&quot;')
+                    .replaceAll("'",'&#39;');
+            }
+
+            function setDayHeader(){
+                const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+                const el = byId('todayDayName');
+                if (el) el.textContent = `(${days[new Date().getDay()]})`;
+            }
+
+            // ---------- LOAD DOCTORS ----------
+            async function loadDoctors(refreshDropdown = false) {
+                const res = await fetch(
+                    `/Admin/Schedule/Doctors?q=${encodeURIComponent(state.doctors.q)}&page=${state.doctors.page}&pageSize=${state.doctors.pageSize}`,
+                    { credentials: "same-origin" }
+                );
+                const data = await res.json();
+
+                const tbody = document.querySelector('#doctorsScheduleTable tbody');
+                tbody.innerHTML = data.items.map(d => `
+                    <tr data-doctor='${JSON.stringify(d)}'>
+                        <td>${escapeHtml(d.fullName)}</td>
+                        <td>${escapeHtml(d.speciality ?? '-')}</td>
+                        <td>${escapeHtml(d.email ?? '-')}</td>
+                        <td>
+                            <button class="btn-primary btn-sm" onclick="selectDoctor(this)">Select</button>
+                            <button class="btn-secondary btn-sm" onclick="openCheckHoursModal('${d.id}','${escapeHtml(d.fullName)}')">Check Hours</button>
+                        </td>
+                    </tr>`
+                ).join('');
+
+                // row click to select
+                [...tbody.querySelectorAll('tr')].forEach(tr => tr.addEventListener('click', () => {
+                    const doc = JSON.parse(tr.getAttribute('data-doctor'));
+                    state.selectedDoctor = { id: doc.id, fullName: doc.fullName, speciality: doc.speciality };
+
+                    // highlight row
+                    [...tbody.querySelectorAll('tr')].forEach(r => r.classList.remove('active'));
+                    tr.classList.add('active');
+
+                    // sync dropdown
+                    const sel = byId('scheduleDoctorSelect');
+                    if (sel){
+                        sel.value = doc.id;
+                    }
+                }));
+
+                // pagination controls
+                const sec = document.querySelector('.schedule-doctor-table-section .pagination');
+                if (sec){
+                    const info = sec.querySelector('.pagination-info');
+                    const prev = sec.querySelector('.prev');
+                    const next = sec.querySelector('.next');
+                    if (info) info.innerText = `Page ${data.page} of ${data.totalPages}`;
+                    if (prev) prev.onclick = () => {
+                        if (data.page > 1){
+                            state.doctors.page--;
+                            loadDoctors(refreshDropdown);
+                        }
+                    };
+                    if (next) next.onclick = () => {
+                        if (data.page < data.totalPages){
+                            state.doctors.page++;
+                            loadDoctors(refreshDropdown);
+                        }
+                    };
+                }
+
+                // top-right doctor dropdown
+                if (refreshDropdown){
+                    const sel = byId('scheduleDoctorSelect');
+                    if (sel){
+                        const current = sel.value;
+                        const options = ['<option value="">Select Doctor</option>'].concat(
+                            data.items.map(d =>
+                                `<option value="${d.id}" data-name="${escapeHtml(d.fullName)}" data-spec="${escapeHtml(d.speciality ?? '')}">
+                                    ${escapeHtml(d.fullName)}
+                                </option>`
+                            )
+                        );
+                        sel.innerHTML = options.join('');
+                        if (current) sel.value = current;
+                    }
+                }
+            }
+
+            // ---------- LOAD ASSIGNMENTS ----------
+            async function loadAssignments() {
+                const res = await fetch(
+                    `/Admin/Schedule/Assignments?q=${encodeURIComponent(state.assignments.q)}&page=${state.assignments.page}&pageSize=${state.assignments.pageSize}`,
+                    { credentials: "same-origin" }
+                );
+                const data = await res.json();
+
+                const tbody = document.querySelector('#assignmentsTable tbody');
+                tbody.innerHTML = data.items.map(a => {
+                    const id = (a.id !== null && a.id !== undefined) ? a.id : 'null';
+
+                    return `
+                        <tr>
+                            <td>${escapeHtml(a.doctorName)}</td>
+                            <td>${escapeHtml(a.branch)}</td>
+                            <td>${a.startLocal}</td>
+                            <td>${a.endLocal}</td>
+                            <td>${a.hours}</td>
+                            <td>
+                                <button class="btn-primary btn-sm" onclick="openEdit(${id})">View/Edit</button>
+                                <button class="btn-danger btn-sm" onclick="cancelAssignment(${id})">Cancel</button>
+                            </td>
+                        </tr>`;
+                }).join('');
+
+                // pagination for assignments
+                const sec = document.querySelector('.schedule-assignments-table-section .pagination');
+                if (sec){
+                    const info = sec.querySelector('.pagination-info');
+                    const prev = sec.querySelector('.prev');
+                    const next = sec.querySelector('.next');
+                    if (info) info.innerText = `Page ${data.page} of ${data.totalPages}`;
+                    if (prev) prev.onclick = () => {
+                        if (data.page > 1){
+                            state.assignments.page--;
+                            loadAssignments();
+                        }
+                    };
+                    if (next) next.onclick = () => {
+                        if (data.page < data.totalPages){
+                            state.assignments.page++;
+                            loadAssignments();
+                        }
+                    };
+                }
+            }
+
+            // ---------- LOAD BLOCK REQUESTS ----------
+            async function loadRequests() {
+                const res = await fetch(
+                    `/Admin/Schedule/BlockRequests?q=${encodeURIComponent(state.requests.q)}&page=${state.requests.page}&pageSize=${state.requests.pageSize}`,
+                    { credentials: "same-origin" }
+                );
+                const data = await res.json();
+
+                const tbody = document.querySelector('#blockRequestsTable tbody');
+                tbody.innerHTML = data.items.map(r => `
+                    <tr>
+                        <td>${escapeHtml(r.doctorName)}</td>
+                        <td>${r.startDate}</td>
+                        <td>${r.endDate}</td>
+                        <td>${escapeHtml(r.reason ?? '-')}</td>
+                        <td>
+                            <button class="btn-primary btn-sm" onclick="approveReq(${r.requestId})">Approve</button>
+                            <button class="btn-danger btn-sm" onclick="declineReq(${r.requestId})">Decline</button>
+                        </td>
+                    </tr>`
+                ).join('');
+
+                const sec = document.querySelector('.schedule-block-requests-table-section .pagination');
+                if (sec){
+                    const info = sec.querySelector('.pagination-info');
+                    const prev = sec.querySelector('.prev');
+                    const next = sec.querySelector('.next');
+                    if (info) info.innerText = `Page ${data.page} of ${data.totalPages}`;
+                    if (prev) prev.onclick = () => {
+                        if (data.page > 1){
+                            state.requests.page--;
+                            loadRequests();
+                        }
+                    };
+                    if (next) next.onclick = () => {
+                        if (data.page < data.totalPages){
+                            state.requests.page++;
+                            loadRequests();
+                        }
+                    };
+                }
+            }
+
+            // ---------- GLOBAL ACTIONS (exposed to inline onclicks) ----------
+            window.selectDoctor = function(btn){
+                const tr = btn.closest('tr');
+                tr?.click();
+            };
+
+            window.openCheckHoursModal = function(doctorId, fullName){
+                state.selectedDoctor = {
+                    id: doctorId,
+                    fullName: fullName,
+                    speciality: state.selectedDoctor?.speciality ?? '-'
+                };
+
+                byId('checkDutyDoctorName').innerText = `Dr. ${fullName}`;
+                byId('assignedHoursText').value = '—';
+
+                const today = new Date().toISOString().slice(0,10);
+                byId('dutyWeekDate').value = today;
+
+                openModal('checkDutyHourModal');
+            };
+
+            async function checkWeeklyHours() {
+                if (!state.selectedDoctor){
+                    alert('Select a doctor first.');
+                    return;
+                }
+                const dateStr = byId('dutyWeekDate').value;
+                if (!dateStr){
+                    alert('Choose a date inside the target week.');
+                    return;
+                }
+
+                const res = await fetch(
+                    `/Admin/Schedule/WeeklyHours?doctorId=${state.selectedDoctor.id}&weekOfLocal=${dateStr}`,
+                    { credentials: "same-origin" }
+                );
+
+                if (!res.ok){
+                    alert('Failed to load weekly hours');
+                    return;
+                }
+
+                const data = await res.json();
+
+                const lines = [];
+                lines.push(`Total: ${data.totalHours.toFixed(2)}h | Left: ${data.hoursLeft.toFixed(2)}h`);
+                lines.push('---------------------------------------');
+
+                if (!data.items || data.items.length === 0){
+                    lines.push('No assignments for this week.');
+                } else {
+                    data.items.forEach(i => {
+                        lines.push(`${i.StartLocal} → ${i.EndLocal}  (${i.Hours}h)`);
+                    });
+                }
+
+                byId('assignedHoursText').value = lines.join('\n');
+            }
+
+            window.approveReq = async function(id){
+                const res = await fetch(`/Admin/Schedule/BlockRequests/${id}/approve`, {
+                    method: 'POST',
+                    credentials: "same-origin"
+                });
+                if (!res.ok){
+                    alert('Failed to approve request.');
+                    return;
+                }
+                loadRequests();
+            };
+
+            window.declineReq = async function(id){
+                const res = await fetch(`/Admin/Schedule/BlockRequests/${id}/decline`, {
+                    method: 'POST',
+                    credentials: "same-origin"
+                });
+                if (!res.ok){
+                    alert('Failed to decline request.');
+                    return;
+                }
+                loadRequests();
+            };
+
+            async function submitAssignment(){
+                if (!state.selectedDoctor){
+                    alert('Select a doctor first.');
+                    return;
+                }
+
+                const branchId = byId('assignBranch').value;
+                const date = byId('assignDate').value;
+                const startTime = byId('assignStartTime').value;
+                const endTime = byId('assignEndTime').value;
+
+                if (!branchId || !date || !startTime || !endTime){
+                    alert('Please fill all fields.');
+                    return;
+                }
+
+                const body = {
+                    DoctorId: state.selectedDoctor.id,
+                    BranchId: parseInt(branchId),
+                    Date: date,
+                    StartTime: startTime,
+                    EndTime: endTime
+                };
+
+                const res = await fetch('/Admin/Schedule/Assign', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: "same-origin",
+                    body: JSON.stringify(body)
+                });
+
+                if (!res.ok){
+                    const j = await res.json().catch(()=>({error:'Failed'}));
+                    alert(j.error || 'Failed to assign.');
+                    return;
+                }
+
+                closeModal('assignDutyModal');
+                loadAssignments();
+            }
+
+            // -------- OPEN EDIT MODAL --------
+            window.openEdit = async function(id){
+                if (id === null || id === undefined || id === 'null'){
+                    alert('Assignment not found.');
+                    return;
+                }
+
+                const res = await fetch(`/Admin/Schedule/Assignments/${id}`, {
+                    credentials: "same-origin"
+                });
+                if (!res.ok){
+                    alert('Assignment not found.');
+                    return;
+                }
+
+                const a = await res.json();
+                // a = { id, doctorId, doctorName, branchId, branchName, startLocal, endLocal, doctorNumericId }
+
+                // fill hidden id
+                byId('eaAssignmentId').value = a.id;
+
+                // fill datetime-local fields (already yyyy-MM-ddTHH:mm from backend)
+                byId('eaStart').value = a.startLocal;
+                byId('eaEnd').value   = a.endLocal;
+
+                // build doctor dropdown
+                const docSel = byId('eaDoctorId');
+                docSel.innerHTML = '<option value="">Select doctor...</option>';
+
+                const lastRows = document.querySelectorAll('#doctorsScheduleTable tbody tr');
+                lastRows.forEach(tr => {
+                    const d = JSON.parse(tr.getAttribute('data-doctor'));
+                    docSel.insertAdjacentHTML(
+                        'beforeend',
+                        `<option value="${d.id}" ${d.id === a.doctorId ? 'selected' : ''}>
+                            ${escapeHtml(d.fullName)}
+                        </option>`
+                    );
+                });
+
+                // ensure currently assigned doctor is present
+                if (![...docSel.options].some(o => o.value === a.doctorId)){
+                    docSel.insertAdjacentHTML(
+                        'beforeend',
+                        `<option value="${a.doctorId}" selected>${escapeHtml(a.doctorName)}</option>`
+                    );
+                }
+
+                // branch dropdown
+                const brSel = byId('eaBranchId');
+                brSel.innerHTML = state.branches.map(b =>
+                    `<option value="${b.id}" ${b.id === a.branchId ? 'selected' : ''}>
+                        ${escapeHtml(b.name)}
+                    </option>`
+                ).join('');
+
+                // hours calc
+                const recalc = () => {
+                    const s = new Date(byId('eaStart').value);
+                    const e = new Date(byId('eaEnd').value);
+                    const h = (e - s) / 36e5;
+                    byId('eaHours').value = (isFinite(h) && h > 0) ? h.toFixed(2) : '0';
+                };
+                byId('eaStart').onchange = recalc;
+                byId('eaEnd').onchange   = recalc;
+                recalc();
+
+                openModal('editAssignmentModal');
+            };
+
+            // -------- CANCEL ASSIGNMENT --------
+            window.cancelAssignment = async function(id){
+                if (id === null || id === undefined || id === 'null'){
+                    alert('Invalid assignment.');
+                    return;
+                }
+
+                if(!confirm('Cancel this assignment?')) return;
+
+                const res = await fetch(`/Admin/Schedule/Assignments/${id}`, {
+                    method: 'DELETE',
+                    credentials: "same-origin"
+                });
+
+                if (!res.ok){
+                    const j = await res.json().catch(()=>({error:'Failed'}));
+                    alert(j.error || 'Failed to cancel.');
+                    return;
+                }
+
+                loadAssignments();
+            };
+
+            // ---------- EVENT WIRING ----------
+            setDayHeader();
+
+            // Pre-fill Branch dropdown in Assign Duty modal
+            const branchSel = byId('assignBranch');
+            if (branchSel){
+                branchSel.innerHTML =
+                    '<option value="">Select Branch</option>' +
+                    state.branches.map(b =>
+                        `<option value="${b.id}">${escapeHtml(b.name)}</option>`
+                    ).join('');
+            }
+
+            const docSearchBtn = byId('doctorSearchBtn');
+            if (docSearchBtn){
+                docSearchBtn.addEventListener('click', () => {
+                    state.doctors.q = byId('doctorScheduleSearch').value.trim();
+                    state.doctors.page = 1;
+                    loadDoctors(true);
+                });
+            }
+
+            const assignmentSearchBtn = byId('assignmentSearchBtn');
+            if (assignmentSearchBtn){
+                assignmentSearchBtn.addEventListener('click', () => {
+                    state.assignments.q = byId('assignmentSearch').value.trim();
+                    state.assignments.page = 1;
+                    loadAssignments();
+                });
+            }
+
+            const blockRequestSearchBtn = byId('blockRequestSearchBtn');
+            if (blockRequestSearchBtn){
+                blockRequestSearchBtn.addEventListener('click', () => {
+                    state.requests.q = byId('blockRequestSearch').value.trim();
+                    state.requests.page = 1;
+                    loadRequests();
+                });
+            }
+
+            const openAssignBtn = byId('assignDutyOpenBtn');
+            if (openAssignBtn){
+                openAssignBtn.addEventListener('click', () => {
+                    if (!state.selectedDoctor){
+                        // fallback to dropdown
+                        const sel = byId('scheduleDoctorSelect');
+                        const doctorId = sel?.value || "";
+                        if (!doctorId){
+                            alert('Select a doctor first (row or dropdown).');
+                            return;
+                        }
+                        const option = sel.selectedOptions[0];
+                        state.selectedDoctor = {
+                            id: doctorId,
+                            fullName: option?.getAttribute('data-name') || 'Doctor',
+                            speciality: option?.getAttribute('data-spec') || '-'
+                        };
+                    }
+
+                    // fill Assign Duty modal header
+                    byId('assignDutyDoctorName').innerText =
+                        `Dr. ${state.selectedDoctor.fullName}`;
+                    byId('assignDutyDoctorSpecialty').innerText =
+                        `Specialty: ${state.selectedDoctor.speciality ?? '-'}`;
+
+                    openModal('assignDutyModal');
+                });
+            }
+
+            const checkBtn = byId('checkDutyBtn');
+            if (checkBtn){
+                checkBtn.addEventListener('click', checkWeeklyHours);
+            }
+
+            const assignForm = byId('assignDutyForm');
+            if (assignForm){
+                assignForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await submitAssignment();
+                });
+            }
+
+            const docSelect = byId('scheduleDoctorSelect');
+            if (docSelect){
+                docSelect.addEventListener('change', (e) => {
+                    const opt = e.target.selectedOptions[0];
+                    if (!opt || !opt.value) {
+                        state.selectedDoctor = null;
+                        return;
+                    }
+                    state.selectedDoctor = {
+                        id: opt.value,
+                        fullName: opt.getAttribute('data-name') || '',
+                        speciality: opt.getAttribute('data-spec') || ''
+                    };
+                });
+            }
+
+            const editForm = byId('editAssignmentForm');
+            if (editForm){
+                editForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const id = parseInt(byId('eaAssignmentId').value);
+                    const dto = {
+                        DoctorId: byId('eaDoctorId').value,
+                        BranchId: parseInt(byId('eaBranchId').value),
+                        StartLocal: byId('eaStart').value,
+                        EndLocal: byId('eaEnd').value
+                    };
+
+                    if (!dto.DoctorId || !dto.BranchId || !dto.StartLocal || !dto.EndLocal){
+                        alert('Please fill all fields.');
+                        return;
+                    }
+
+                    const res = await fetch(`/Admin/Schedule/Assignments/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type':'application/json' },
+                        credentials: "same-origin",
+                        body: JSON.stringify(dto)
+                    });
+
+                    if (!res.ok){
+                        const j = await res.json().catch(()=>({error:'Failed to update'}));
+                        alert(j.error || 'Failed to update.');
+                        return;
+                    }
+
+                    closeModal('editAssignmentModal');
+                    loadAssignments();
+                });
+            }
+
+            // ---------- INITIAL LOAD ----------
+            loadDoctors(true);
+            loadAssignments();
+            loadRequests();
+
+        }); // DOMContentLoaded
+    </script>
+}

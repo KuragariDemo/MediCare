@@ -1,0 +1,269 @@
+﻿:root {
+    --primary: #00A8A8;
+    --primary-dark: #007A7A;
+    --danger: #FF5A58;
+    --success: #34D399; /* Green for success */
+    --background: #f4f7f9;
+    --card-bg: #ffffff;
+    --text-dark: #1d2a33;
+    --text-muted: #5b6b75;
+    --border-color: #e3f1f6;
+    --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.08);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--background);
+    color: var(--text-dark);
+}
+
+/* --- Dashboard Header Styles --- */
+.dashboard-header {
+    background-color: var(--card-bg);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+    .dashboard-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+.header-left h1 {
+    color: var(--primary-dark);
+    font-size: 1.875rem; /* text-3xl */
+    font-weight: 700;
+}
+
+.header-left p {
+    color: var(--text-muted);
+    font-size: 0.875rem; /* text-sm */
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    color: var(--card-bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0; /* Prevent shrinking on smaller screens */
+}
+
+.user-role {
+    font-size: 0.75rem; /* text-xs */
+    color: var(--text-muted);
+}
+
+/* --- Profile Card and Form Styles --- */
+.section-card {
+    background-color: var(--card-bg);
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-color);
+    transition: box-shadow 0.3s ease;
+    margin: 0 !important;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.control-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 0.875rem; /* text-sm */
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 0.75rem; /* More rounded */
+    font-size: 1rem;
+    color: var(--text-dark);
+    background-color: #fcfcfc;
+    transition: all 0.2s ease-in-out;
+}
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(0, 168, 168, 0.2);
+        background-color: var(--card-bg);
+    }
+
+    .form-input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(50%) sepia(100%) saturate(2000%) hue-rotate(140deg); /* Color the calendar icon */
+    }
+
+.text-danger {
+    color: var(--danger);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: var(--card-bg);
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    width: 100%;
+}
+
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(0, 168, 168, 0.4);
+    }
+
+.alert-success {
+    background-color: rgba(52, 211, 153, 0.1); /* light success color */
+    color: var(--success);
+    border: 1px solid var(--success);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.icon-small {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Responsive Grid for DOB and Gender */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+    .form-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Profile Avatar Upload Section */
+.profile-avatar-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.current-avatar {
+    width: 96px; /* Larger size for profile page */
+    height: 96px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    color: var(--card-bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    font-size: 2.25rem; /* text-4xl */
+    border: 3px solid var(--border-color);
+    box-shadow: var(--shadow-subtle);
+    flex-shrink: 0;
+    overflow: hidden; /* For actual image */
+    position: relative;
+}
+
+    .current-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+/* Re-introduced button styles for the label below the avatar */
+.upload-btn {
+    background-color: var(--background);
+    color: var(--text-dark);
+    border: 1px solid var(--border-color);
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    margin-top: 0; /* Aligning with gap in profile-avatar-upload */
+}
+
+    .upload-btn:hover {
+        background-color: var(--background);
+        border-color: var(--primary);
+        color: var(--primary-dark);
+        box-shadow: 0 0 0 2px rgba(0, 168, 168, 0.1);
+    }
+
+.logout-form {
+    margin-left: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.logout-btn {
+    background: var(--color-danger, #d9534f);
+    border: none;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 10px 14px;
+    border-radius: var(--border-radius-medium, 10px);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: opacity .15s ease;
+}
+
+    .logout-btn:hover {
+        opacity: .85;
+    }
+
+/* make sure header-right elements line up nicely in a row */
+.dashboard-header .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: nowrap;
+}
+
