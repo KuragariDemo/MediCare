@@ -1,4 +1,5 @@
 ﻿@using MediCare.App.Models
+@using System.Text.Json
 @model MediCare.App.ViewModels.Patient.RecentAppointmentsVM
 
 
@@ -80,7 +81,7 @@
                                     @if (row.HasPrescription && !string.IsNullOrWhiteSpace(row.PrescriptionText))
                                     {
                                         <span class="recent-appointment-status-pill recent-appointment-status-pill-submitted"
-                                              onclick="openPrescriptionModal('@apptDateText', '@row.DoctorName', `@row.PrescriptionText`)">
+                                              onclick="openPrescriptionModal(@Html.Raw(JsonSerializer.Serialize(apptDateText)), @Html.Raw(JsonSerializer.Serialize(row.DoctorName)), @Html.Raw(JsonSerializer.Serialize(row.PrescriptionText)))">
                                             Submitted
                                         </span>
                                     }
@@ -94,7 +95,7 @@
 
                                 <td>
                                     <a class="recent-appointment-action-link"
-                                       onclick="openFeedbackModal('@row.DoctorName', @row.AppointmentId, `@row.ExistingFeedbackText`)">
+                                       onclick="openFeedbackModal(@Html.Raw(JsonSerializer.Serialize(row.DoctorName)), @row.AppointmentId, @Html.Raw(JsonSerializer.Serialize(row.ExistingFeedbackText)))">
                                         Give Feedback
                                     </a>
                                 </td>
@@ -172,7 +173,11 @@
         function openPrescriptionModal(date, doctor, content) {
             document.getElementById("pres-date").innerText = date;
             document.getElementById("pres-doctor").innerText = doctor;
-            document.getElementById("prescription-content").innerHTML = `<p>${content}</p>`;
+            const p = document.createElement("p");
+            p.textContent = content;
+            const holder = document.getElementById("prescription-content");
+            holder.innerHTML = "";
+            holder.appendChild(p);
             document.getElementById("prescription-modal").style.display = "block";
         }
 

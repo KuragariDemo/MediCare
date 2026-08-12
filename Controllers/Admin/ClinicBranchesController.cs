@@ -7,9 +7,11 @@ using Microsoft.EntityFrameworkCore;
 using MediCare.App.Data;
 using MediCare.Models;
 using MediCare.ViewModels.Branches;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MediCare.Controllers.Admin
 {
+    [Authorize(Roles = "AdminPlus,Admin")]
     [Route("Admin/[controller]/[action]")]
     public class ClinicBranchesController : Controller
     {

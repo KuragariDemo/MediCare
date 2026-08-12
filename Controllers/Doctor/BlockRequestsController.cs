@@ -129,6 +129,13 @@ namespace MediCare.App.Controllers.Doctor
             if (overlapsApproved)
                 return BadRequest("Overlaps with existing approved block.");
 
+            bool overlapsPending = await _db.DoctorBlockRequests
+                .AnyAsync(r => r.DoctorId == me &&
+                               r.Status == BlockRequestStatus.Pending &&
+                               r.StartDateUtc <= endUtc && startUtc <= r.EndDateUtc);
+            if (overlapsPending)
+                return BadRequest("You already have a pending request that overlaps this period.");
+
             var req = new DoctorBlockRequest
             {
                 DoctorId = me,

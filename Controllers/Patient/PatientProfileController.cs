@@ -13,7 +13,7 @@ using PatientModel = MediCare.App.Models.Patient;
 
 namespace MediCare.App.Controllers.Patients
 {
-    [Authorize] // keep auth
+    [Authorize(Roles = "Patient")]
     public class PatientProfileController : Controller
     {
         private readonly MediCareContext _db;

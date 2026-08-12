@@ -1,5 +1,194 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+@model MediCare.App.Models.ViewModels.AppointmentBookVm
+@using MediCare.App.Controllers
 @{
+    ViewData["Title"] = $"Book with Dr. {Model.DoctorName} - ForestView Hospital";
+    Layout = "_Layout";
+
+    var slots = (List<AppointmentController.SlotInfo>)(ViewBag.AvailableSlots ?? new List<AppointmentController.SlotInfo>());
+}
+
+<section class="container">
+    <style>
+        :root {
+            --teal: #00A8A8;
+            --ink: #0a4d68;
+            --muted: #6b7280;
+            --bg: #f7fafc;
+            --card: #ffffff;
+            --border: #e5e7eb;
+            --danger: #e11d48;
+        }
+
+        body { background: var(--bg); font-family: Roboto, system-ui, Segoe UI, Arial, sans-serif; }
+        .container { max-width: 720px; margin: 32px auto; padding: 16px; }
+
+        .book-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(0,0,0,.05);
+        }
+
+        .book-card h1 { color: var(--ink); margin: 0 0 4px; font-size: 1.5rem; }
+        .book-sub { color: var(--muted); margin: 0 0 24px; }
+
+        .field { margin-bottom: 16px; }
+        .label { display: block; font-weight: 600; color: var(--ink); margin-bottom: 6px; font-size: .9rem; }
+        .input, select.input, textarea.input {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+            border-radius: 8px; font: inherit; box-sizing: border-box;
+        }
+
+        .grid.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @@media (max-width: 640px) { .grid.two { grid-template-columns: 1fr; } }
+
+        .fee-line { color: var(--teal); font-weight: 700; margin: 8px 0 20px; }
+
+        .pay-options { display: flex; gap: 12px; margin-bottom: 16px; }
+        .pay-option {
+            flex: 1; border: 1px solid var(--border); border-radius: 10px;
+            padding: 12px; cursor: pointer; text-align: center;
+        }
+        .pay-option input { margin-right: 6px; }
+
+        #cardFields { display: none; border-top: 1px dashed var(--border); padding-top: 16px; margin-top: 4px; }
+        #cardFields.visible { display: block; }
+
+        .btn-primary {
+            width: 100%; padding: 14px; border: none; border-radius: 10px;
+            background: var(--teal); color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer;
+        }
+        .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+        .empty-slots { color: var(--danger); background: #fff1f2; border: 1px solid #fecdd3; padding: 12px; border-radius: 8px; }
+        .validation-summary-errors { color: var(--danger); margin-bottom: 12px; }
+        .field-validation-error { color: var(--danger); font-size: .85rem; }
+    </style>
+
+    <div class="book-card">
+        <h1>Book with Dr. @Model.DoctorName</h1>
+        <p class="book-sub">Fill in your details below to request this appointment.</p>
+        <p class="fee-line">Consultation fee: @Model.ConsultationFee.ToString("C")</p>
+
+        @if (!slots.Any())
+        {
+            <p class="empty-slots">This doctor has no upcoming open slots right now. Please check back later or use the <a asp-controller="Appointment" asp-action="Index">appointment wizard</a> to browse other doctors.</p>
+        }
+        else
+        {
+            <form asp-controller="Appointment" asp-action="Create" method="post" id="bookForm">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+                <input type="hidden" asp-for="DoctorId" />
+                <input type="hidden" asp-for="ConsultationFee" />
+                <input type="hidden" asp-for="TotalAmount" />
+                <input type="hidden" id="DutyDate" name="DutyDate" />
+                <input type="hidden" id="StartTime" name="StartTime" />
+                <input type="hidden" id="EndTime" name="EndTime" />
+                <input type="hidden" id="Branch" name="Branch" />
+
+                <div class="field">
+                    <label class="label">Choose a slot *</label>
+                    <select id="slotSelect" class="input">
+                        @foreach (var s in slots)
+                        {
+                            <option value="@s.Date|@s.Start|@s.End|@s.Branch">@s.Label</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="grid two">
+                    <div class="field">
+                        <label class="label" asp-for="PatientName">Full Name *</label>
+                        <input class="input" asp-for="PatientName" required />
+                        <span asp-validation-for="PatientName" class="field-validation-error"></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="PatientEmail">Email Address *</label>
+                        <input class="input" type="email" asp-for="PatientEmail" required />
+                        <span asp-validation-for="PatientEmail" class="field-validation-error"></span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label" asp-for="PatientPhone">Phone Number *</label>
+                    <input class="input" asp-for="PatientPhone" required />
+                    <span asp-validation-for="PatientPhone" class="field-validation-error"></span>
+                </div>
+
+                <div class="field">
+                    <label class="label" asp-for="ReasonNote">Reason for Visit</label>
+                    <textarea class="input" asp-for="ReasonNote" rows="3" placeholder="Briefly describe your symptoms..."></textarea>
+                </div>
+
+                <div class="field">
+                    <label class="label">Payment Method *</label>
+                    <div class="pay-options">
+                        <label class="pay-option"><input type="radio" name="PaymentChoice" value="cash" checked /> Cash at Clinic</label>
+                        <label class="pay-option"><input type="radio" name="PaymentChoice" value="card" /> Pay with Card</label>
+                    </div>
+                </div>
+
+                <div id="cardFields">
+                    <div class="field">
+                        <label class="label" asp-for="CardNumber">Card Number</label>
+                        <input class="input" asp-for="CardNumber" maxlength="19" placeholder="XXXX XXXX XXXX XXXX" />
+                    </div>
+                    <div class="grid two">
+                        <div class="field">
+                            <label class="label" asp-for="CardExp">Expiry (MM/YY)</label>
+                            <input class="input" asp-for="CardExp" maxlength="5" />
+                        </div>
+                        <div class="field">
+                            <label class="label" asp-for="CardCvc">CVC</label>
+                            <input class="input" asp-for="CardCvc" maxlength="4" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="CardName">Name on Card</label>
+                        <input class="input" asp-for="CardName" />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">Confirm Booking</button>
+            </form>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var slotSelect = document.getElementById('slotSelect');
+            var dutyDate = document.getElementById('DutyDate');
+            var startTime = document.getElementById('StartTime');
+            var endTime = document.getElementById('EndTime');
+            var branch = document.getElementById('Branch');
+
+            function applySlot() {
+                if (!slotSelect || !slotSelect.value) return;
+                var parts = slotSelect.value.split('|');
+                dutyDate.value = parts[0];
+                startTime.value = parts[1];
+                endTime.value = parts[2];
+                branch.value = parts[3];
+            }
+
+            if (slotSelect) {
+                slotSelect.addEventListener('change', applySlot);
+                applySlot();
+            }
+
+            var cardFields = document.getElementById('cardFields');
+            var radios = document.querySelectorAll('input[name="PaymentChoice"]');
+            radios.forEach(function (r) {
+                r.addEventListener('change', function () {
+                    if (cardFields) cardFields.classList.toggle('visible', r.value === 'card' && r.checked);
+                });
+            });
+        })();
+    </script>
 }

@@ -1,5 +1,6 @@
 ﻿@using System.Text.Json
 @using MediCare.App.Models
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
 @{
 
     ViewData["Title"] = "Clinic Branches Management";
@@ -8,7 +9,10 @@
     var branchesLite = ((IEnumerable<ClinicBranch>)ViewBag.Branches ?? new List<ClinicBranch>())
         .Select(b => new { id = b.Id, name = b.Name });
     var branchesJson = JsonSerializer.Serialize(branchesLite);
+    string AntiXsrf() => Xsrf.GetAndStoreTokens(Context).RequestToken!;
 }
+
+<meta name="request-verification-token" content="@AntiXsrf()" />
 
 <div class="dashboard-container">
     @await Html.PartialAsync("_AdminSidebar")
@@ -287,6 +291,9 @@
 
         document.addEventListener("DOMContentLoaded", () => {
 
+            // ---------- ANTIFORGERY ----------
+            const RTOKEN = document.querySelector('meta[name="request-verification-token"]').content;
+
             // ---------- STATE ----------
             const state = {
                 doctors: { page: 1, pageSize: 10, q: "" },
@@ -543,6 +550,7 @@
             window.approveReq = async function(id){
                 const res = await fetch(`/Admin/Schedule/BlockRequests/${id}/approve`, {
                     method: 'POST',
+                    headers: { 'RequestVerificationToken': RTOKEN },
                     credentials: "same-origin"
                 });
                 if (!res.ok){
@@ -555,6 +563,7 @@
             window.declineReq = async function(id){
                 const res = await fetch(`/Admin/Schedule/BlockRequests/${id}/decline`, {
                     method: 'POST',
+                    headers: { 'RequestVerificationToken': RTOKEN },
                     credentials: "same-origin"
                 });
                 if (!res.ok){
@@ -590,7 +599,7 @@
 
                 const res = await fetch('/Admin/Schedule/Assign', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': RTOKEN },
                     credentials: "same-origin",
                     body: JSON.stringify(body)
                 });
@@ -686,6 +695,7 @@
 
                 const res = await fetch(`/Admin/Schedule/Assignments/${id}`, {
                     method: 'DELETE',
+                    headers: { 'RequestVerificationToken': RTOKEN },
                     credentials: "same-origin"
                 });
 
@@ -816,7 +826,7 @@
 
                     const res = await fetch(`/Admin/Schedule/Assignments/${id}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type':'application/json' },
+                        headers: { 'Content-Type':'application/json', 'RequestVerificationToken': RTOKEN },
                         credentials: "same-origin",
                         body: JSON.stringify(dto)
                     });
