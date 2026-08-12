@@ -1,5 +1,9 @@
-﻿using MediCare.App.Data;
+﻿using System;
+using System.Linq;
+using System.Runtime.InteropServices;
+using MediCare.App.Data;
 using MediCare.App.Models;
+using MediCare.App.ViewModels.Doctor;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +19,9 @@ namespace MediCare.App.Controllers.Doctor
         private readonly MediCareContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+
+        private static readonly TimeZoneInfo TZ = TimeZoneInfo.FindSystemTimeZoneById(
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "SE Asia Standard Time" : "Asia/Bangkok");
 
         public DashboardController(
             MediCareContext db,
@@ -40,7 +47,60 @@ namespace MediCare.App.Controllers.Doctor
 
             ViewBag.DoctorName = doctor?.User.FullName ?? user.FullName ?? user.UserName ?? "Doctor";
             ViewBag.Speciality = doctor?.Specialty?.Name ?? doctor?.Speciality ?? "N/A"; // display
-            return View("~/Views/Doctors/Dashboard.cshtml");
+
+            var vm = new DoctorDashboardVM();
+
+            if (doctor != null)
+            {
+                var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TZ);
+                var today = nowLocal.Date;
+
+                var appts = await _db.Appointments
+                    .AsNoTracking()
+                    .Where(a => a.DoctorId == doctor.Id)
+                    .ToListAsync();
+
+                var todays = appts.Where(a => a.DutyDate.Date == today)
+                    .OrderBy(a => a.StartTime)
+                    .ToList();
+
+                vm.TodaySchedule = todays.Select(a =>
+                {
+                    var endsAt = today + a.EndTime;
+                    var startsAt = today + a.StartTime;
+                    return new TodayAppointmentVM
+                    {
+                        AppointmentId = a.Id,
+                        PatientName = a.PatientName,
+                        ReasonNote = a.ReasonNote,
+                        StartTime = a.StartTime,
+                        EndTime = a.EndTime,
+                        IsCompleted = endsAt < nowLocal,
+                        IsInProgress = startsAt <= nowLocal && nowLocal <= endsAt
+                    };
+                }).ToList();
+
+                vm.TodayCount = todays.Count;
+                vm.TodayCompletedCount = vm.TodaySchedule.Count(a => a.IsCompleted);
+                vm.TodayUpcomingCount = vm.TodayCount - vm.TodayCompletedCount;
+                vm.TotalPatientsCount = appts.Select(a => a.PatientId).Distinct().Count();
+
+                vm.RecentPatients = appts
+                    .OrderByDescending(a => a.DutyDate).ThenByDescending(a => a.StartTime)
+                    .GroupBy(a => a.PatientId)
+                    .Select(g => g.First())
+                    .Take(5)
+                    .Select(a => new RecentPatientVM
+                    {
+                        PatientName = a.PatientName,
+                        LastVisit = a.DutyDate,
+                        ReasonNote = a.ReasonNote,
+                        Paid = a.PaymentStatus == PaymentStatus.Paid
+                    })
+                    .ToList();
+            }
+
+            return View("~/Views/Doctors/Dashboard.cshtml", vm);
         }
 
         // Doctors/Dashboard/Profile
