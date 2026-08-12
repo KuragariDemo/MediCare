@@ -18,11 +18,13 @@ namespace MediCare.App.Controllers.Patients
     {
         private readonly MediCareContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public PatientProfileController(MediCareContext db, UserManager<ApplicationUser> userManager)
+        public PatientProfileController(MediCareContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
         {
             _db = db;
             _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         private string GetMyUserId()
@@ -179,6 +181,35 @@ namespace MediCare.App.Controllers.Patients
             return View("~/Views/Patient/PatientProfile.cshtml", form);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
+        {
+            var myUserId = GetMyUserId();
+            var appUser = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == myUserId);
+            if (appUser == null) return Unauthorized();
 
+            if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
+            {
+                TempData["Error"] = "Please fill in all password fields.";
+                return RedirectToAction(nameof(Index));
+            }
+            if (newPassword != confirmPassword)
+            {
+                TempData["Error"] = "New password and confirmation do not match.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var result = await _userManager.ChangePasswordAsync(appUser, currentPassword, newPassword);
+            if (!result.Succeeded)
+            {
+                TempData["Error"] = string.Join("; ", result.Errors.Select(e => e.Description));
+                return RedirectToAction(nameof(Index));
+            }
+
+            await _signInManager.RefreshSignInAsync(appUser);
+            TempData["Success"] = "Password changed successfully.";
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

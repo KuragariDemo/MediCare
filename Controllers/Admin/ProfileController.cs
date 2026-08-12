@@ -114,6 +114,37 @@ namespace MediCare.App.Controllers.Admin
             return RedirectToRoute("AdminProfileIndex");
         }
 
+        //Admin/Profile/ChangePassword
+        [HttpPost("ChangePassword")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
+            {
+                TempData["Error"] = "Please fill in all password fields.";
+                return RedirectToRoute("AdminProfileIndex");
+            }
+            if (newPassword != confirmPassword)
+            {
+                TempData["Error"] = "New password and confirmation do not match.";
+                return RedirectToRoute("AdminProfileIndex");
+            }
+
+            var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+            if (!result.Succeeded)
+            {
+                TempData["Error"] = string.Join("; ", result.Errors.Select(e => e.Description));
+                return RedirectToRoute("AdminProfileIndex");
+            }
+
+            await _signInManager.RefreshSignInAsync(user);
+            TempData["Success"] = "Password changed successfully.";
+            return RedirectToRoute("AdminProfileIndex");
+        }
+
         //Admin/Profile/Logout
         [HttpPost("Logout")]
         [ValidateAntiForgeryToken]

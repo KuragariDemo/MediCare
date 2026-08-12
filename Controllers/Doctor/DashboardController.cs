@@ -146,6 +146,36 @@ namespace MediCare.App.Controllers.Doctor
             return RedirectToAction("Index", "Home");
         }
 
+        [HttpPost("ChangePassword")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
+            {
+                TempData["Error"] = "Please fill in all password fields.";
+                return RedirectToRoute("DoctorDashboardProfile");
+            }
+            if (newPassword != confirmPassword)
+            {
+                TempData["Error"] = "New password and confirmation do not match.";
+                return RedirectToRoute("DoctorDashboardProfile");
+            }
+
+            var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+            if (!result.Succeeded)
+            {
+                TempData["Error"] = string.Join("; ", result.Errors.Select(e => e.Description));
+                return RedirectToRoute("DoctorDashboardProfile");
+            }
+
+            await _signInManager.RefreshSignInAsync(user);
+            TempData["Success"] = "Password changed successfully.";
+            return RedirectToRoute("DoctorDashboardProfile");
+        }
+
         [HttpPost("Profile/Update")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateProfile(

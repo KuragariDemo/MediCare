@@ -173,7 +173,7 @@
 
                     <button class="btn-secondary action-full-width"
                             type="button"
-                            onclick="showToast('Change Password feature coming soon!')">
+                            onclick="document.getElementById('changePasswordModal').classList.add('visible')">
                         🔑 Change Password
                     </button>
 
@@ -196,6 +196,32 @@
             </div>
         </div>
     </main>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal" id="changePasswordModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Change Password</h2>
+            <button type="button" class="modal-close" onclick="document.getElementById('changePasswordModal').classList.remove('visible')">&times;</button>
+        </div>
+        <form method="post" asp-controller="Profile" asp-action="ChangePassword" asp-route-area="">
+            @Html.AntiForgeryToken()
+            <div class="field-group">
+                <label for="currentPassword">Current Password</label>
+                <input class="form-input" type="password" id="currentPassword" name="currentPassword" required />
+            </div>
+            <div class="field-group">
+                <label for="newPassword">New Password</label>
+                <input class="form-input" type="password" id="newPassword" name="newPassword" required minlength="6" />
+            </div>
+            <div class="field-group">
+                <label for="confirmPassword">Confirm New Password</label>
+                <input class="form-input" type="password" id="confirmPassword" name="confirmPassword" required minlength="6" />
+            </div>
+            <button type="submit" class="btn-primary action-full-width" style="margin-top:12px;">Update Password</button>
+        </form>
+    </div>
 </div>
 
 @section Scripts {
