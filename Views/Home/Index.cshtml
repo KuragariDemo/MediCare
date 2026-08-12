@@ -1,91 +1,25 @@
-﻿@using Microsoft.AspNetCore.Identity
-@using MediCare.App.Models
-@inject SignInManager<ApplicationUser> SignInManager
-@inject UserManager<ApplicationUser> UserManager
+﻿@{
+    ViewData["Title"] = "ForestView Hospital - Empowering Lives Through Health";
+    Layout = null;
+}
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ForestView Hospital - Empowering Lives Through Health</title>
-    <link rel="stylesheet" href="style.css">
+    <title>@ViewData["Title"]</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Global + Core Styles -->
     <link rel="stylesheet" href="~/css/globals.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <!-- Page-specific Styles -->
-    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="site-container">
-            <div class="logo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2" />
-                    <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
-                </svg>
-                <span class="logo-text"><strong>ForestView</strong><br />Hospital</span>
-            </div>
-            <nav class="nav">
-                <a href="index.html" class="nav-link active">Home</a>
-                <a href="about.html" class="nav-link">About</a>
-                <a href="doctors.html" class="nav-link">Doctors</a>
-                <a href="contact.html" class="nav-link">Contact</a>
-            </nav>
-            <div class="auth-buttons">
-                @if (SignInManager.IsSignedIn(User))
-                {
-                    var user = await UserManager.GetUserAsync(User);
-                    var roles = user is null ? Array.Empty<string>() : await UserManager.GetRolesAsync(user);
-
-                    string role =
-                    roles.Contains("AdminPlus") ? "AdminPlus" :
-                    roles.Contains("Admin") ? "Admin" :
-                    roles.Contains("Doctor") ? "Doctor" :
-                    roles.Contains("Patient") ? "Patient" : "User";
-
-                    string fullName = user?.FullName ?? user?.UserName ?? "User";
-
-                    string dashboardHref = role switch
-                    {
-                        "Doctor" => "/Doctors/Dashboard",
-                        "Patient" => "/Patient/Dashboard",
-                        "Admin" => "/Admin/Dashboard",
-                        "AdminPlus" => "/Admin/Dashboard",
-                        _ => "/"
-                    };
-
-                    string avatar = role switch
-                    {
-                        "Doctor" => "👨‍⚕️",
-                        "Admin" => "🧑‍💼",
-                        "AdminPlus" => "🧑‍💼",
-                        "Patient" => "👤",
-                        _ => "🙂"
-                    };
-
-                    <a href="@dashboardHref" class="user-profile" style="text-decoration:none;color:inherit;">
-                        <div class="user-avatar">@avatar</div>
-                        <div class="user-info">
-                            <p class="user-name">@fullName</p>
-                            <p class="user-role">@role</p>
-                        </div>
-                    </a>
-                }
-                else
-                {
-                    <a asp-area="Identity" asp-page="/Account/Register" class="register-btn">Register</a>
-                    <a asp-area="Identity" asp-page="/Account/Login" class="login-btn">Log in</a>
-                }
-            </div>
-        </div>
-    </header>
+    <partial name="_PublicHeader" />
 
     <!-- Hero Section -->
     <section class="hero">
@@ -276,43 +210,45 @@
                 <h2>Meet Our Doctors</h2>
                 <h3>We're Dedicated To Your Well-Being</h3>
 
-                <div class="search-bar-container">
+                <form class="search-bar-container" asp-controller="Appointment" asp-action="Index" method="get">
                     <div class="search-bar">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="search-icon">
                             <circle cx="9" cy="9" r="6" stroke="#00A8A8" stroke-width="2" />
                             <path d="M13 13L17 17" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
                         </svg>
-                        <input type="text" placeholder="Search doctors by name or specialty..." class="search-input">
-                        <button class="search-btn">
+                        <input type="text" name="q" placeholder="Search doctors by name or specialty..." class="search-input">
+                        <button type="submit" class="search-btn" title="Find a doctor">
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                                 <circle cx="9" cy="9" r="6" stroke="white" stroke-width="2" />
                                 <path d="M13 13L17 17" stroke="white" stroke-width="2" stroke-linecap="round" />
                             </svg>
                         </button>
                     </div>
-                </div>
+                </form>
             </div>
 
-            <div class="doctors-carousel">
-                <button class="carousel-btn prev">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                    </svg>
-                </button>
-
-                <div class="doctors-grid">
-                    <div class="doctor-card"><div class="doctor-image"></div><h4>Sabrina Caldwell</h4><p>Dentistry</p></div>
-                    <div class="doctor-card"><div class="doctor-image"></div><h4>Avery Berry</h4><p>Cardiology</p></div>
-                    <div class="doctor-card"><div class="doctor-image"></div><h4>Albert Simmons</h4><p>Neurology</p></div>
-                    <div class="doctor-card"><div class="doctor-image"></div><h4>Marvin Soto</h4><p>Surgent</p></div>
+            @{
+                var featuredDoctors = (IEnumerable<dynamic>)(ViewBag.FeaturedDoctors ?? Array.Empty<object>());
+            }
+            @if (featuredDoctors.Any())
+            {
+                <div class="doctors-carousel">
+                    <div class="doctors-grid">
+                        @foreach (var doc in featuredDoctors)
+                        {
+                            <a class="doctor-card" asp-controller="Appointment" asp-action="Index" style="text-decoration:none;color:inherit;">
+                                <div class="doctor-image"></div>
+                                <h4>Dr. @doc.Name</h4>
+                                <p>@doc.Specialty</p>
+                            </a>
+                        }
+                    </div>
                 </div>
-
-                <button class="carousel-btn next">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                    </svg>
-                </button>
-            </div>
+            }
+            else
+            {
+                <p style="text-align:center;color:#6b7280;">Doctors will appear here once they're added to the system.</p>
+            }
         </div>
     </section>
 
@@ -327,59 +263,9 @@
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="site-container">
-            <div class="footer-content">
-                <div class="footer-col">
-                    <div class="footer-logo">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2" />
-                            <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
-                        </svg>
-                        <span><strong>ForestView</strong><br />Hospital</span>
-                    </div>
-                    <p>Navigating Health Together: Your Trusted Medical Resource. Medicine Meets Technology Your Online Health Hub.</p>
-                </div>
+    <partial name="_PublicFooter" />
 
-                <div class="footer-col">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="about.html">About</a></li>
-                        <li><a href="doctors.html">Doctors</a></li>
-                        <li><a href="contact.html">Contact</a></li>
-                    </ul>
-                </div>
-
-                <div class="footer-col">
-                    <h4>Department</h4>
-                    <ul>
-                        <li><a href="#">Cardiology</a></li>
-                        <li><a href="#">Neurology</a></li>
-                        <li><a href="#">Urology</a></li>
-                        <li><a href="#">Radiology</a></li>
-                    </ul>
-                </div>
-
-                <div class="footer-col">
-                    <h4>Location</h4>
-                    <p>10 Road Block-E, Banasree<br />Dhaka, Bangladesh</p>
-                    <p>0181234567</p>
-                    <a href="branches.html" class="footer-branches-link">View All Branches →</a>
-                </div>
-            </div>
-
-            <div class="footer-bottom">
-                <p>2024 Designer Hasan All rights reserved</p>
-                <div class="social-links">
-                    <!-- icons unchanged -->
-                    ...
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <script src="script.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
 </body>
 </html>

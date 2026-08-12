@@ -122,6 +122,28 @@ body {
         box-shadow: 0 5px 15px rgba(0,0,0,.3);
     }
 
+/* Mobile nav toggle (hamburger) — hidden on desktop */
+.nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+    .nav-toggle span {
+        display: block;
+        width: 100%;
+        height: 2px;
+        background: #0a4d68;
+        border-radius: 2px;
+    }
+
 /* Hero */
 .hero {
     margin-top: 80px;
@@ -1043,8 +1065,39 @@ body {
         grid-template-columns: 1fr;
     }
 
+    .nav-toggle {
+        display: flex;
+    }
+
     .nav {
         display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        gap: 0;
+        background: white;
+        box-shadow: 0 8px 16px rgba(0,0,0,.08);
+        padding: 8px 20px;
+    }
+
+        .nav.nav-open {
+            display: flex;
+        }
+
+        .nav .nav-link {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+            .nav .nav-link:last-child {
+                border-bottom: none;
+            }
+
+    .header .site-container {
+        position: relative;
+        flex-wrap: wrap;
     }
 
     .newsletter-form {

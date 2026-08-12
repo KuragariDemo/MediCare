@@ -1,44 +1,24 @@
-﻿<!DOCTYPE html>
+@model List<MediCare.Models.ClinicBranch>
+@{
+    ViewData["Title"] = "Our Branches - ForestView Hospital";
+    Layout = null;
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Our Branches - ForestView Hospital</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="pages.css">
-    <link rel="stylesheet" href="branches.css">
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/globals.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/pages.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/branches.css" asp-append-version="true">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="logo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2" />
-                    <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
-                </svg>
-                <span class="logo-text"><strong>ForestView</strong><br />Hospital</span>
-            </div>
-            <nav class="nav">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="about.html" class="nav-link">About</a>
-                <a href="doctors.html" class="nav-link">Doctors</a>
-                <a href="contact.html" class="nav-link">Contact</a>
-            </nav>
-            <div class="auth-buttons">
-                <button class="register-btn">Register</button>
-                <button class="login-btn">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <circle cx="8" cy="8" r="7" stroke="white" stroke-width="1.5" />
-                    </svg>
-                    Log in
-                </button>
-            </div>
-        </div>
-    </header>
+    <partial name="_PublicHeader" />
 
     <!-- Branches Hero -->
     <section class="page-hero">
@@ -51,302 +31,70 @@
     <!-- Branches Section -->
     <section class="branches-section">
         <div class="container">
-            <div class="branches-grid">
-                <!-- Banasree Branch -->
-                <div class="branch-card-detail">
-                    <div class="branch-header">
-                        <div class="branch-badge">Main Branch</div>
-                        <h2>Banasree Branch</h2>
-                    </div>
-
-                    <div class="branch-image-placeholder">
-                        <div class="branch-placeholder-icon">🏥</div>
-                    </div>
-
-                    <div class="branch-details">
-                        <div class="detail-item">
-                            <div class="detail-icon">📍</div>
-                            <div class="detail-content">
-                                <h4>Address</h4>
-                                <p>10 Road Block-E, Banasree<br />Dhaka 1219, Bangladesh</p>
+            @if (Model.Any())
+            {
+                <div class="branches-grid">
+                    @foreach (var b in Model)
+                    {
+                        <div class="branch-card-detail">
+                            <div class="branch-header">
+                                <h2>@b.Name</h2>
                             </div>
-                        </div>
 
-                        <div class="detail-item">
-                            <div class="detail-icon">📞</div>
-                            <div class="detail-content">
-                                <h4>Phone</h4>
-                                <p>+880 181 234 567<br />+880 181 234 570</p>
+                            <div class="branch-image-placeholder">
+                                <div class="branch-placeholder-icon">🏥</div>
                             </div>
-                        </div>
 
-                        <div class="detail-item">
-                            <div class="detail-icon">✉️</div>
-                            <div class="detail-content">
-                                <h4>Email</h4>
-                                <p>banasree@forestviewhospital.com</p>
-                            </div>
-                        </div>
-
-                        <div class="detail-item">
-                            <div class="detail-icon">🕐</div>
-                            <div class="detail-content">
-                                <h4>Working Hours</h4>
-                                <div class="hours-list">
-                                    <div class="hours-row">
-                                        <span>Monday - Friday</span>
-                                        <span>8:00 AM - 8:00 PM</span>
+                            <div class="branch-details">
+                                @if (!string.IsNullOrWhiteSpace(b.Address))
+                                {
+                                    <div class="detail-item">
+                                        <div class="detail-icon">📍</div>
+                                        <div class="detail-content">
+                                            <h4>Address</h4>
+                                            <p>@b.Address</p>
+                                        </div>
                                     </div>
-                                    <div class="hours-row">
-                                        <span>Saturday</span>
-                                        <span>9:00 AM - 5:00 PM</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(b.Phone))
+                                {
+                                    <div class="detail-item">
+                                        <div class="detail-icon">📞</div>
+                                        <div class="detail-content">
+                                            <h4>Phone</h4>
+                                            <p>@b.Phone</p>
+                                        </div>
                                     </div>
-                                    <div class="hours-row closed">
-                                        <span>Sunday</span>
-                                        <span>Closed</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(b.Email))
+                                {
+                                    <div class="detail-item">
+                                        <div class="detail-icon">✉️</div>
+                                        <div class="detail-content">
+                                            <h4>Email</h4>
+                                            <p>@b.Email</p>
+                                        </div>
                                     </div>
-                                </div>
+                                }
+                            </div>
+
+                            <div class="branch-actions">
+                                <a class="branch-btn primary" asp-controller="Appointment" asp-action="Index">Book Appointment</a>
                             </div>
                         </div>
-
-                        <div class="detail-item">
-                            <div class="detail-icon">🏥</div>
-                            <div class="detail-content">
-                                <h4>Available Services</h4>
-                                <div class="services-tags">
-                                    <span class="service-tag">Cardiology</span>
-                                    <span class="service-tag">Dentistry</span>
-                                    <span class="service-tag">Neurology</span>
-                                    <span class="service-tag">Emergency</span>
-                                    <span class="service-tag">Laboratory</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="branch-actions">
-                        <button class="branch-btn primary" onclick="window.location.href='appointment.html'">
-                            Book Appointment
-                        </button>
-                        <button class="branch-btn secondary">
-                            Get Directions
-                        </button>
-                    </div>
+                    }
                 </div>
-
-                <!-- Gulshan Branch -->
-                <div class="branch-card-detail">
-                    <div class="branch-header">
-                        <h2>Gulshan Branch</h2>
-                    </div>
-
-                    <div class="branch-image-placeholder">
-                        <div class="branch-placeholder-icon">🏥</div>
-                    </div>
-
-                    <div class="branch-details">
-                        <div class="detail-item">
-                            <div class="detail-icon">📍</div>
-                            <div class="detail-content">
-                                <h4>Address</h4>
-                                <p>45 Gulshan Avenue, Gulshan-1<br />Dhaka 1212, Bangladesh</p>
-                            </div>
-                        </div>
-
-                        <div class="detail-item">
-                            <div class="detail-icon">📞</div>
-                            <div class="detail-content">
-                                <h4>Phone</h4>
-                                <p>+880 181 234 568<br />+880 181 234 571</p>
-                            </div>
-                        </div>
-
-                        <div class="detail-item">
-                            <div class="detail-icon">✉️</div>
-                            <div class="detail-content">
-                                <h4>Email</h4>
-                                <p>gulshan@forestviewhospital.com</p>
-                            </div>
-                        </div>
-
-                        <div class="detail-item">
-                            <div class="detail-icon">🕐</div>
-                            <div class="detail-content">
-                                <h4>Working Hours</h4>
-                                <div class="hours-list">
-                                    <div class="hours-row">
-                                        <span>Monday - Friday</span>
-                                        <span>9:00 AM - 7:00 PM</span>
-                                    </div>
-                                    <div class="hours-row">
-                                        <span>Saturday</span>
-                                        <span>10:00 AM - 4:00 PM</span>
-                                    </div>
-                                    <div class="hours-row closed">
-                                        <span>Sunday</span>
-                                        <span>Closed</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="detail-item">
-                            <div class="detail-icon">🏥</div>
-                            <div class="detail-content">
-                                <h4>Available Services</h4>
-                                <div class="services-tags">
-                                    <span class="service-tag">Dentistry</span>
-                                    <span class="service-tag">Pediatrics</span>
-                                    <span class="service-tag">Dermatology</span>
-                                    <span class="service-tag">Laboratory</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="branch-actions">
-                        <button class="branch-btn primary" onclick="window.location.href='appointment.html'">
-                            Book Appointment
-                        </button>
-                        <button class="branch-btn secondary">
-                            Get Directions
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Dhanmondi Branch -->
-                <div class="branch-card-detail">
-                    <div class="branch-header">
-                        <h2>Dhanmondi Branch</h2>
-                    </div>
-
-                    <div class="branch-image-placeholder">
-                        <div class="branch-placeholder-icon">🏥</div>
-                    </div>
-
-                    <div class="branch-details">
-                        <div class="detail-item">
-                            <div class="detail-icon">📍</div>
-                            <div class="detail-content">
-                                <h4>Address</h4>
-                                <p>23 Dhanmondi Road, Dhanmondi<br />Dhaka 1209, Bangladesh</p>
-                            </div>
-                        </div>
-
-                        <div class="detail-item">
-                            <div class="detail-icon">📞</div>
-                            <div class="detail-content">
-                                <h4>Phone</h4>
-                                <p>+880 181 234 569<br />+880 181 234 572</p>
-                            </div>
-                        </div>
-
-                        <div class="detail-item">
-                            <div class="detail-icon">✉️</div>
-                            <div class="detail-content">
-                                <h4>Email</h4>
-                                <p>dhanmondi@forestviewhospital.com</p>
-                            </div>
-                        </div>
-
-                        <div class="detail-item">
-                            <div class="detail-icon">🕐</div>
-                            <div class="detail-content">
-                                <h4>Working Hours</h4>
-                                <div class="hours-list">
-                                    <div class="hours-row">
-                                        <span>Monday - Friday</span>
-                                        <span>10:00 AM - 8:00 PM</span>
-                                    </div>
-                                    <div class="hours-row">
-                                        <span>Saturday</span>
-                                        <span>10:00 AM - 6:00 PM</span>
-                                    </div>
-                                    <div class="hours-row closed">
-                                        <span>Sunday</span>
-                                        <span>Closed</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="detail-item">
-                            <div class="detail-icon">🏥</div>
-                            <div class="detail-content">
-                                <h4>Available Services</h4>
-                                <div class="services-tags">
-                                    <span class="service-tag">Neurology</span>
-                                    <span class="service-tag">Orthopedics</span>
-                                    <span class="service-tag">Physiotherapy</span>
-                                    <span class="service-tag">Laboratory</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="branch-actions">
-                        <button class="branch-btn primary" onclick="window.location.href='appointment.html'">
-                            Book Appointment
-                        </button>
-                        <button class="branch-btn secondary">
-                            Get Directions
-                        </button>
-                    </div>
-                </div>
-            </div>
+            }
+            else
+            {
+                <p style="text-align:center;color:#6b7280;">No branches are listed yet. Please check back soon.</p>
+            }
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-col">
-                    <div class="footer-logo">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2" />
-                            <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
-                        </svg>
-                        <span><strong>ForestView</strong><br />Hospital</span>
-                    </div>
-                    <p>Navigating Health Together: Your Trusted Medical Resource.</p>
-                </div>
-                <div class="footer-col">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="about.html">About</a></li>
-                        <li><a href="doctors.html">Doctors</a></li>
-                        <li><a href="contact.html">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h4>Department</h4>
-                    <ul>
-                        <li><a href="#">Cardiology</a></li>
-                        <li><a href="#">Neurology</a></li>
-                        <li><a href="#">Urology</a></li>
-                        <li><a href="#">Radiology</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h4>Location</h4>
-                    <p>10 Road Block-E, Banasree<br />Dhaka, Bangladesh</p>
-                    <p>0181234567</p>
-                    <a href="branches.html" class="footer-branches-link">View All Branches →</a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>2024 ForestView Hospital. All rights reserved</p>
-                <div class="social-links">
-                    <a href="#" class="social-icon">📘</a>
-                    <a href="#" class="social-icon">📷</a>
-                    <a href="#" class="social-icon">💼</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <partial name="_PublicFooter" />
 
-    <script src="script.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
 </body>
 </html>

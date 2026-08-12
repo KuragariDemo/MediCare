@@ -38,6 +38,15 @@ namespace MediCare.App.Controllers.Patient
         {
             var meId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            var patientName = await _db.Patients
+                .AsNoTracking()
+                .Where(p => p.UserId == meId)
+                .Select(p => p.FullName)
+                .FirstOrDefaultAsync();
+            ViewBag.DisplayName = string.IsNullOrWhiteSpace(patientName)
+                ? (User.FindFirstValue(ClaimTypes.Name) ?? "Patient")
+                : patientName;
+
             // get all appts + include doctor info
             var appts = await _db.Appointments
                 .AsNoTracking()

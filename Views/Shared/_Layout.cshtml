@@ -32,9 +32,11 @@
     @RenderSection("Styles", required: false)
 </head>
 <body>
-    <div id="app-root">
+    <partial name="_PublicHeader" />
+    <div id="app-root" style="margin-top:80px;">
         @RenderBody()
     </div>
+    <partial name="_PublicFooter" />
 
     <!-- JS -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

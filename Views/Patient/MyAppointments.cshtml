@@ -7,10 +7,12 @@
 
 @{
     ViewData["Title"] = "My Appointments";
-    Layout = "_Layout"; // <-- or your Patient Dashboard layout
+    Layout = "_PatientLayout";
 
     string fmtDate(DateTime dt) => dt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     string fmtTime(DateTime dt) => dt.ToString("hh:mm tt", CultureInfo.InvariantCulture);
+
+    var displayName = ViewBag.DisplayName as string ?? "Patient";
 }
 
 <!-- Anti-forgery token for JS -->
@@ -23,19 +25,14 @@
         <!-- Header -->
         <header class="dashboard-header">
             <div class="header-left">
-                <h1>Welcome, John Doe!</h1>
+                <h1>My Appointments</h1>
                 <p>Manage your health records and appointments</p>
             </div>
             <div class="header-right">
-                <button class="notification-btn">
-                    <span>🔔</span>
-                    <span class="notification-badge">3</span>
-                </button>
                 <div class="user-profile">
-                    <div class="user-avatar">JD</div>
+                    <div class="user-avatar">@(displayName.Length > 0 ? displayName.Substring(0, 1).ToUpper() : "P")</div>
                     <div class="user-info">
-                        <p class="user-name">John Doe</p>
-                        <p class="user-role">Patient ID: #12345</p>
+                        <p class="user-name">@displayName</p>
                     </div>
                 </div>
             </div>
