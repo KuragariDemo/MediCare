@@ -11,22 +11,7 @@
 
     <!-- Main Content -->
     <main class="dashboard-main">
-        <!-- Header -->
-        <header class="dashboard-header">
-            <div class="header-left">
-                <h1>Admin Dashboard</h1>
-                <p>Hospital Management Overview</p>
-            </div>
-            <div class="header-right">
-                <div class="user-profile">
-                    <div class="user-avatar">AD</div>
-                    <div class="user-info">
-                        <p class="user-name">@(User.Identity?.Name ?? "Admin")</p>
-                        <p class="user-role">System Administrator</p>
-                    </div>
-                </div>
-            </div>
-        </header>
+        <partial name="_AdminHeader" />
 
         <!-- Dashboard Content -->
         <div class="dashboard-content">
