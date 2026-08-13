@@ -3,8 +3,11 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using MediCare.App.Data;
 using MediCare.App.Models;
+using MediCare.App.Services;
 using MediCare.App.ViewModels.Doctor;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -19,6 +22,7 @@ namespace MediCare.App.Controllers.Doctor
         private readonly MediCareContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IWebHostEnvironment _env;
 
         private static readonly TimeZoneInfo TZ = TimeZoneInfo.FindSystemTimeZoneById(
             RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "SE Asia Standard Time" : "Asia/Bangkok");
@@ -26,8 +30,10 @@ namespace MediCare.App.Controllers.Doctor
         public DashboardController(
             MediCareContext db,
             UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
+            SignInManager<ApplicationUser> signInManager,
+            IWebHostEnvironment env)
         {
+            _env = env;
             _db = db;
             _userManager = userManager;
             _signInManager = signInManager;
@@ -134,6 +140,7 @@ namespace MediCare.App.Controllers.Doctor
                                 })
                                 .ToListAsync();
             ViewBag.Specialties = list;
+            ViewBag.AvatarUrl = AvatarStorage.GetAvatarUrl(_env, user.Id);
 
             return View("~/Views/Doctors/DoctorProfile.cshtml");
         }
@@ -144,6 +151,25 @@ namespace MediCare.App.Controllers.Doctor
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpPost("UploadAvatar")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadAvatar(IFormFile avatarFile)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var (ok, error) = AvatarStorage.Validate(avatarFile);
+            if (!ok)
+            {
+                TempData["Error"] = error;
+                return RedirectToRoute("DoctorDashboardProfile");
+            }
+
+            await AvatarStorage.SaveAsync(_env, user.Id, avatarFile);
+            TempData["Success"] = "Profile picture updated.";
+            return RedirectToRoute("DoctorDashboardProfile");
         }
 
         [HttpPost("ChangePassword")]

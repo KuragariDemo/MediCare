@@ -89,38 +89,47 @@
                 </span>
             </div>
 
+            <!-- AVATAR UPLOAD (separate form: posts straight to the server, no JS-only fake) -->
+            <form asp-action="UploadAvatar"
+                  asp-controller="PatientProfile"
+                  method="post"
+                  enctype="multipart/form-data"
+                  class="profile-avatar-upload">
+                @Html.AntiForgeryToken()
+
+                <div class="current-avatar" id="profile-picture-display">
+                    @if (!string.IsNullOrEmpty(safeModel.AvatarUrl))
+                    {
+                        <img src="@safeModel.AvatarUrl" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />
+                    }
+                    else
+                    {
+                        @safeModel.Initials
+                    }
+                </div>
+
+                <label for="avatar-upload" class="upload-btn">
+                    <i data-lucide="upload" class="icon-small"></i>
+                    Change Photo
+                    <input type="file"
+                           id="avatar-upload"
+                           name="avatarFile"
+                           accept="image/jpeg,image/png,image/webp,image/gif"
+                           class="hidden"
+                           onchange="this.form.submit()" />
+                </label>
+            </form>
+
             <!-- FORM -->
             <form asp-action="Index"
                   asp-controller="PatientProfile"
-                  method="post"
-                  enctype="multipart/form-data">
+                  method="post">
 
                 @Html.AntiForgeryToken()
 
                 <!-- hidden keys -->
                 <input type="hidden" asp-for="PatientId" />
                 <input type="hidden" asp-for="UserId" />
-
-                <!-- AVATAR UPLOAD -->
-                <div class="profile-avatar-upload">
-                    <div class="current-avatar" id="profile-picture-display">
-                        @safeModel.Initials
-                        @* if you later store patient photo url, replace above with:
-                           <img src="@safeModel.ProfileImageUrl" alt="Profile" />
-                        *@
-                    </div>
-
-                    <label for="avatar-upload" class="upload-btn">
-                        <i data-lucide="upload" class="icon-small"></i>
-                        Change Photo
-                        <input type="file"
-                               id="avatar-upload"
-                               name="AvatarFile"
-                               accept="image/*"
-                               class="hidden"
-                               onchange="previewAvatar(event)" />
-                    </label>
-                </div>
 
                 <!-- Full Name -->
                 <div class="form-group">
@@ -234,23 +243,6 @@
     <script>
         if (window.lucide) {
             lucide.createIcons();
-        }
-
-        // Preview avatar locally (no upload to server yet)
-        function previewAvatar(event) {
-            const file = event.target.files && event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = e => {
-                const container = document.getElementById("profile-picture-display");
-                container.innerHTML = "";
-                const img = document.createElement("img");
-                img.src = e.target.result;
-                img.alt = "New Profile";
-                container.appendChild(img);
-            };
-            reader.readAsDataURL(file);
         }
     </script>
 

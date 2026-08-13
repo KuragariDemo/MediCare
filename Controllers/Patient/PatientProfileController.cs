@@ -4,8 +4,11 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using MediCare.App.Data;
 using MediCare.App.Models;
+using MediCare.App.Services;
 using MediCare.App.ViewModels.Patient;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,12 +22,14 @@ namespace MediCare.App.Controllers.Patients
         private readonly MediCareContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IWebHostEnvironment _env;
 
-        public PatientProfileController(MediCareContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        public PatientProfileController(MediCareContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IWebHostEnvironment env)
         {
             _db = db;
             _userManager = userManager;
             _signInManager = signInManager;
+            _env = env;
         }
 
         private string GetMyUserId()
@@ -103,6 +108,7 @@ namespace MediCare.App.Controllers.Patients
                 Gender = patient.Gender,
                 DisplayName = displayName,
                 Initials = initials,
+                AvatarUrl = AvatarStorage.GetAvatarUrl(_env, myUserId),
                 StatusMessage = null
             };
 
@@ -179,6 +185,24 @@ namespace MediCare.App.Controllers.Patients
             form.StatusMessage = "Profile updated successfully.";
 
             return View("~/Views/Patient/PatientProfile.cshtml", form);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadAvatar(IFormFile avatarFile)
+        {
+            var myUserId = GetMyUserId();
+
+            var (ok, error) = AvatarStorage.Validate(avatarFile);
+            if (!ok)
+            {
+                TempData["Error"] = error;
+                return RedirectToAction(nameof(Index));
+            }
+
+            await AvatarStorage.SaveAsync(_env, myUserId, avatarFile);
+            TempData["Success"] = "Profile picture updated.";
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]

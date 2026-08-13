@@ -74,18 +74,32 @@
 
                 <!-- LEFT CARD: avatar / summary -->
                 <div class="info-card user-card">
+                    @{ var avatarUrl = ViewBag.AvatarUrl as string; }
                     <div class="profile-picture-container">
-                        <div class="profile-picture" id="profileInitials">@initials</div>
+                        <div class="profile-picture" id="profileInitials">
+                            @if (!string.IsNullOrEmpty(avatarUrl))
+                            {
+                                <img src="@avatarUrl" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />
+                            }
+                            else
+                            {
+                                @initials
+                            }
+                        </div>
 
                         <!-- Only clickable in edit mode -->
-                        <div class="upload-overlay hidden" id="uploadOverlay" onclick="handleProfilePictureUpload()">
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                <path d="M10 5V15M5 10H15"
-                                      stroke="white"
-                                      stroke-width="2"
-                                      stroke-linecap="round" />
-                            </svg>
-                        </div>
+                        <form asp-controller="Profile" asp-action="UploadAvatar" asp-route-area="" method="post" enctype="multipart/form-data" id="avatarForm">
+                            @Html.AntiForgeryToken()
+                            <label class="upload-overlay hidden" id="uploadOverlay" for="adminAvatarInput" style="cursor:pointer;">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M10 5V15M5 10H15"
+                                          stroke="white"
+                                          stroke-width="2"
+                                          stroke-linecap="round" />
+                                </svg>
+                            </label>
+                            <input type="file" id="adminAvatarInput" name="avatarFile" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" onchange="document.getElementById('avatarForm').submit()" />
+                        </form>
                     </div>
 
                     <h3 id="displayNameCard">@fullName</h3>
@@ -210,9 +224,6 @@
         // --- helpers ---
         function showToast(msg) {
             alert(msg);
-        }
-        function handleProfilePictureUpload() {
-            showToast('Profile picture upload coming soon!');
         }
 
         // buttons

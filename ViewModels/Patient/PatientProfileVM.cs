@@ -36,6 +36,7 @@ namespace MediCare.App.ViewModels.Patient
 
         public string DisplayName { get; set; } = "Patient";
         public string Initials { get; set; } = "PT";
+        public string? AvatarUrl { get; set; }
 
         public string? StatusMessage { get; set; }
     }

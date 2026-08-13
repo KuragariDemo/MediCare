@@ -1,6 +1,9 @@
 ﻿using MediCare.App.Data;
 using MediCare.App.Models;
+using MediCare.App.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,15 +17,18 @@ namespace MediCare.App.Controllers.Admin
         private readonly MediCareContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IWebHostEnvironment _env;
 
         public ProfileController(
             MediCareContext db,
             UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
+            SignInManager<ApplicationUser> signInManager,
+            IWebHostEnvironment env)
         {
             _db = db;
             _userManager = userManager;
             _signInManager = signInManager;
+            _env = env;
         }
 
         //Admin/Profile  (or /Admin/Profile/Index)
@@ -52,8 +58,29 @@ namespace MediCare.App.Controllers.Admin
             ViewBag.Email = user.Email ?? "";
             ViewBag.RoleRaw = role;
             ViewBag.Role = roleLabel;
+            ViewBag.AvatarUrl = AvatarStorage.GetAvatarUrl(_env, user.Id);
 
             return View("~/Views/Admin/AdminProfile.cshtml");
+        }
+
+        //Admin/Profile/UploadAvatar
+        [HttpPost("UploadAvatar")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadAvatar(IFormFile avatarFile)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var (ok, error) = AvatarStorage.Validate(avatarFile);
+            if (!ok)
+            {
+                TempData["Error"] = error;
+                return RedirectToRoute("AdminProfileIndex");
+            }
+
+            await AvatarStorage.SaveAsync(_env, user.Id, avatarFile);
+            TempData["Success"] = "Profile picture updated.";
+            return RedirectToRoute("AdminProfileIndex");
         }
 
         //Admin/Profile/Update (save edits)
