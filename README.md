@@ -45,3 +45,33 @@ The goal of this project is to provide a digital solution for healthcare service
 
 ---
 
+## 🚀 Getting Started
+
+1. Point `ConnectionStrings:DefaultConnection` in `appsettings.json` (or an environment
+   variable) at a SQL Server instance. Migrations run automatically on startup.
+2. Set the seed admin credentials via configuration rather than editing source:
+   - Development: already set in `appsettings.Development.json` (`Root@12345` — dev-only,
+     do not use elsewhere).
+   - Any other environment: set `Seed:RootAdmin:Email` / `Seed:RootAdmin:Password` via
+     environment variables (`MediCare__Seed__RootAdmin__Password`, etc.) or a secret store.
+     The app refuses to start without these outside Development.
+3. `dotnet run`.
+
+## ⚠️ Known Limitations
+
+- **Payments are a demo flow, not a real integration.** Card payments only validate that a
+  card number is ≥12 digits and are marked "Paid" immediately — there's no payment gateway.
+  Cash-at-clinic bookings are marked "Paid" manually by an admin. Don't point this at real
+  card data.
+- **The contact form is logged, not delivered.** `Contact/Send` validates and logs the
+  submission server-side but there's no SMTP integration or a message table yet — messages
+  aren't emailed or persisted anywhere durable.
+- **Double-booking has an application-level guard, not a DB-level one yet.** Run
+  `dotnet ef migrations add AddUniqueAppointmentSlotIndex` to add a unique index on
+  `Appointments (DoctorId, DutyDate, StartTime, EndTime)` for full protection against a
+  race condition between two near-simultaneous bookings.
+- **Cancelling an appointment is a hard delete**, not a soft-cancel/audit trail. Any
+  associated prescription/feedback rows cascade-delete with it.
+
+---
+
