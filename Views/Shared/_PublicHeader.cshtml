@@ -1,0 +1,91 @@
+@using Microsoft.AspNetCore.Identity
+@using MediCare.App.Models
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@{
+    string CurrentController() => ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    string ActiveIf(string controller) => string.Equals(CurrentController(), controller, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+
+<header class="header">
+    <div class="site-container">
+        <a href="@Url.Action("Index", "Home")" class="logo" style="text-decoration:none;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2" />
+                <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <span class="logo-text"><strong>ForestView</strong><br />Hospital</span>
+        </a>
+
+        <button type="button" class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+            <span></span><span></span><span></span>
+        </button>
+
+        <nav class="nav" id="publicNav">
+            <a asp-controller="Home" asp-action="Index" class="nav-link @ActiveIf("Home")">Home</a>
+            <a asp-controller="About" asp-action="Index" class="nav-link @ActiveIf("About")">About</a>
+            <a asp-controller="Appointment" asp-action="Index" class="nav-link @ActiveIf("Appointment")">Find a Doctor</a>
+            <a asp-controller="Branches" asp-action="Index" class="nav-link @ActiveIf("Branches")">Branches</a>
+            <a asp-controller="Contact" asp-action="Index" class="nav-link @ActiveIf("Contact")">Contact</a>
+        </nav>
+
+        <div class="auth-buttons">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var user = await UserManager.GetUserAsync(User);
+                var roles = user is null ? Array.Empty<string>() : await UserManager.GetRolesAsync(user);
+
+                string role =
+                    roles.Contains("AdminPlus") ? "AdminPlus" :
+                    roles.Contains("Admin") ? "Admin" :
+                    roles.Contains("Doctor") ? "Doctor" :
+                    roles.Contains("Patient") ? "Patient" : "User";
+
+                string fullName = user?.FullName ?? user?.UserName ?? "User";
+
+                string dashboardHref = role switch
+                {
+                    "Doctor" => "/Doctors/Dashboard",
+                    "Patient" => "/Patient/Dashboard",
+                    "Admin" => "/Admin/Dashboard",
+                    "AdminPlus" => "/Admin/Dashboard",
+                    _ => "/"
+                };
+
+                string avatar = role switch
+                {
+                    "Doctor" => "👨‍⚕️",
+                    "Admin" => "🧑‍💼",
+                    "AdminPlus" => "🧑‍💼",
+                    "Patient" => "👤",
+                    _ => "🙂"
+                };
+
+                <a href="@dashboardHref" class="user-profile" style="text-decoration:none;color:inherit;">
+                    <div class="user-avatar">@avatar</div>
+                    <div class="user-info">
+                        <p class="user-name">@fullName</p>
+                        <p class="user-role">@role</p>
+                    </div>
+                </a>
+            }
+            else
+            {
+                <a asp-area="Identity" asp-page="/Account/Register" class="register-btn">Register</a>
+                <a asp-area="Identity" asp-page="/Account/Login" class="login-btn">Log in</a>
+            }
+        </div>
+    </div>
+</header>
+
+<script>
+    (function () {
+        var toggle = document.getElementById('navToggle');
+        var nav = document.getElementById('publicNav');
+        if (!toggle || !nav) return;
+        toggle.addEventListener('click', function () {
+            var open = nav.classList.toggle('nav-open');
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+    })();
+</script>

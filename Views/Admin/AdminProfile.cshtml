@@ -38,26 +38,7 @@
     <!-- Main Content -->
     <main class="dashboard-main">
 
-        <!-- Header (same style as other admin pages) -->
-        <header class="dashboard-header">
-            <div class="header-left">
-                <h1>Admin Dashboard</h1>
-                <p>Hospital Management Overview</p>
-            </div>
-            <div class="header-right">
-                <button class="notification-btn" type="button">
-                    <span>🔔</span>
-                    <span class="notification-badge">8</span>
-                </button>
-                <div class="user-profile">
-                    <div class="user-avatar">@initials</div>
-                    <div class="user-info">
-                        <p class="user-name">@fullName</p>
-                        <p class="user-role">@roleDisplay</p>
-                    </div>
-                </div>
-            </div>
-        </header>
+        <partial name="_AdminHeader" />
 
         <!-- Flash messages -->
         @if (TempData["Error"] != null)
@@ -93,18 +74,32 @@
 
                 <!-- LEFT CARD: avatar / summary -->
                 <div class="info-card user-card">
+                    @{ var avatarUrl = ViewBag.AvatarUrl as string; }
                     <div class="profile-picture-container">
-                        <div class="profile-picture" id="profileInitials">@initials</div>
+                        <div class="profile-picture" id="profileInitials">
+                            @if (!string.IsNullOrEmpty(avatarUrl))
+                            {
+                                <img src="@avatarUrl" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />
+                            }
+                            else
+                            {
+                                @initials
+                            }
+                        </div>
 
                         <!-- Only clickable in edit mode -->
-                        <div class="upload-overlay hidden" id="uploadOverlay" onclick="handleProfilePictureUpload()">
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                <path d="M10 5V15M5 10H15"
-                                      stroke="white"
-                                      stroke-width="2"
-                                      stroke-linecap="round" />
-                            </svg>
-                        </div>
+                        <form asp-controller="Profile" asp-action="UploadAvatar" asp-route-area="" method="post" enctype="multipart/form-data" id="avatarForm">
+                            @Html.AntiForgeryToken()
+                            <label class="upload-overlay hidden" id="uploadOverlay" for="adminAvatarInput" style="cursor:pointer;">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M10 5V15M5 10H15"
+                                          stroke="white"
+                                          stroke-width="2"
+                                          stroke-linecap="round" />
+                                </svg>
+                            </label>
+                            <input type="file" id="adminAvatarInput" name="avatarFile" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" onchange="document.getElementById('avatarForm').submit()" />
+                        </form>
                     </div>
 
                     <h3 id="displayNameCard">@fullName</h3>
@@ -173,7 +168,7 @@
 
                     <button class="btn-secondary action-full-width"
                             type="button"
-                            onclick="showToast('Change Password feature coming soon!')">
+                            onclick="document.getElementById('changePasswordModal').classList.add('visible')">
                         🔑 Change Password
                     </button>
 
@@ -198,14 +193,37 @@
     </main>
 </div>
 
+<!-- Change Password Modal -->
+<div class="modal" id="changePasswordModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Change Password</h2>
+            <button type="button" class="modal-close" onclick="document.getElementById('changePasswordModal').classList.remove('visible')">&times;</button>
+        </div>
+        <form method="post" asp-controller="Profile" asp-action="ChangePassword" asp-route-area="">
+            @Html.AntiForgeryToken()
+            <div class="field-group">
+                <label for="currentPassword">Current Password</label>
+                <input class="form-input" type="password" id="currentPassword" name="currentPassword" required />
+            </div>
+            <div class="field-group">
+                <label for="newPassword">New Password</label>
+                <input class="form-input" type="password" id="newPassword" name="newPassword" required minlength="6" />
+            </div>
+            <div class="field-group">
+                <label for="confirmPassword">Confirm New Password</label>
+                <input class="form-input" type="password" id="confirmPassword" name="confirmPassword" required minlength="6" />
+            </div>
+            <button type="submit" class="btn-primary action-full-width" style="margin-top:12px;">Update Password</button>
+        </form>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         // --- helpers ---
         function showToast(msg) {
             alert(msg);
-        }
-        function handleProfilePictureUpload() {
-            showToast('Profile picture upload coming soon!');
         }
 
         // buttons

@@ -808,7 +808,10 @@
           // close modals on backdrop click
           [modalPay, modalCard, modalSuccess].forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m); }));
 
-          // init
+          // init — prefill the search box from ?q= if arriving from the homepage search
+          const qParam = new URLSearchParams(window.location.search).get('q');
+          if (qParam) inputSearch.value = qParam;
+
           (async () => { await loadSpecialties(); await searchDoctors(); })();
         })();
     </script>

@@ -1,6 +1,9 @@
-﻿@{
-    ViewData["Title"] = "Clinic Branches Management";
+@model MediCare.App.ViewModels.Admin.AdminDashboardVM
+@{
+    ViewData["Title"] = "Admin Dashboard";
     Layout = "_AdminLayout";
+
+    var maxDay = Model.Last7Days.Any() ? Math.Max(1, Model.Last7Days.Max(d => d.Count)) : 1;
 }
 <div class="dashboard-container">
     <!-- Sidebar -->
@@ -8,63 +11,40 @@
 
     <!-- Main Content -->
     <main class="dashboard-main">
-        <!-- Header -->
-        <header class="dashboard-header">
-            <div class="header-left">
-                <h1>Admin Dashboard</h1>
-                <p>Hospital Management Overview</p>
-            </div>
-            <div class="header-right">
-                <button class="notification-btn">
-                    <span>🔔</span>
-                    <span class="notification-badge">8</span>
-                </button>
-                <div class="user-profile">
-                    <div class="user-avatar">AD</div>
-                    <div class="user-info">
-                        <p class="user-name">Admin User</p>
-                        <p class="user-role">System Administrator</p>
-                    </div>
-                </div>
-            </div>
-        </header>
+        <partial name="_AdminHeader" />
 
         <!-- Dashboard Content -->
         <div class="dashboard-content">
-            <!-- Dashboard Home Section -->
             <div id="dashboard-section">
                 <!-- Stats Overview -->
                 <div class="stats-grid four-col">
                     <div class="stat-card">
                         <div class="stat-icon blue">👨‍⚕️</div>
                         <div class="stat-info">
-                            <h3>52</h3>
+                            <h3>@Model.TotalDoctors</h3>
                             <p>Total Doctors</p>
-                            <small class="stat-change positive">+3 this month</small>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon green">👥</div>
                         <div class="stat-info">
-                            <h3>1,245</h3>
+                            <h3>@Model.TotalPatients</h3>
                             <p>Total Patients</p>
-                            <small class="stat-change positive">+127 this month</small>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon orange">📅</div>
                         <div class="stat-info">
-                            <h3>89</h3>
+                            <h3>@Model.TodayAppointments</h3>
                             <p>Today's Appointments</p>
-                            <small class="stat-change">12 pending</small>
+                            <small class="stat-change">@Model.TodayPendingPayments pending payment</small>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon purple">💰</div>
                         <div class="stat-info">
-                            <h3>$45,230</h3>
+                            <h3>@Model.RevenueThisMonth.ToString("C")</h3>
                             <p>Revenue (This Month)</p>
-                            <small class="stat-change positive">+12.5%</small>
                         </div>
                     </div>
                 </div>
@@ -73,21 +53,14 @@
                 <div class="charts-row">
                     <div class="chart-card">
                         <div class="section-header">
-                            <h2>Appointments Overview</h2>
-                            <select class="chart-filter">
-                                <option>This Week</option>
-                                <option>This Month</option>
-                                <option>This Year</option>
-                            </select>
+                            <h2>Appointments (Last 7 Days)</h2>
                         </div>
                         <div class="chart-placeholder">
-                            <div class="chart-bar" style="height: 60%"></div>
-                            <div class="chart-bar" style="height: 80%"></div>
-                            <div class="chart-bar" style="height: 45%"></div>
-                            <div class="chart-bar" style="height: 90%"></div>
-                            <div class="chart-bar" style="height: 70%"></div>
-                            <div class="chart-bar" style="height: 85%"></div>
-                            <div class="chart-bar" style="height: 65%"></div>
+                            @foreach (var d in Model.Last7Days)
+                            {
+                                var pct = (int)Math.Round(d.Count * 100.0 / maxDay);
+                                <div class="chart-bar" style="height: @(Math.Max(pct, 4))%" title="@d.Date.ToString("ddd, dd MMM"): @d.Count appointment(s)"></div>
+                            }
                         </div>
                     </div>
 
@@ -95,81 +68,70 @@
                         <div class="section-header">
                             <h2>Department Distribution</h2>
                         </div>
-                        <div class="department-stats">
-                            <div class="dept-item">
-                                <span class="dept-name">Cardiology</span>
-                                <div class="dept-bar"><div class="dept-fill" style="width: 85%"></div></div>
-                                <span class="dept-value">85%</span>
+                        @if (Model.DepartmentShares.Any())
+                        {
+                            <div class="department-stats">
+                                @foreach (var d in Model.DepartmentShares)
+                                {
+                                    <div class="dept-item">
+                                        <span class="dept-name">@d.Name</span>
+                                        <div class="dept-bar"><div class="dept-fill" style="width: @(d.Percent)%"></div></div>
+                                        <span class="dept-value">@(d.Percent)%</span>
+                                    </div>
+                                }
                             </div>
-                            <div class="dept-item">
-                                <span class="dept-name">Neurology</span>
-                                <div class="dept-bar"><div class="dept-fill" style="width: 70%"></div></div>
-                                <span class="dept-value">70%</span>
-                            </div>
-                            <div class="dept-item">
-                                <span class="dept-name">Dentistry</span>
-                                <div class="dept-bar"><div class="dept-fill" style="width: 65%"></div></div>
-                                <span class="dept-value">65%</span>
-                            </div>
-                            <div class="dept-item">
-                                <span class="dept-name">Pediatrics</span>
-                                <div class="dept-bar"><div class="dept-fill" style="width: 55%"></div></div>
-                                <span class="dept-value">55%</span>
-                            </div>
-                        </div>
+                        }
+                        else
+                        {
+                            <p class="empty-state">No appointment data yet.</p>
+                        }
                     </div>
                 </div>
 
                 <!-- Recent Activity -->
                 <div class="content-section">
                     <div class="section-header">
-                        <h2>Recent Activity</h2>
-                        <button class="btn-secondary">View All</button>
+                        <h2>Recent Bookings</h2>
+                        <a class="btn-secondary" asp-controller="Dashboard" asp-action="AppointmentTable">View All</a>
                     </div>
-                    <div class="activity-list">
-                        <div class="activity-item">
-                            <div class="activity-icon blue">👨‍⚕️</div>
-                            <div class="activity-content">
-                                <p><strong>New Doctor Added</strong></p>
-                                <p>Dr. Michael Brown joined Cardiology department</p>
-                                <span class="activity-time">2 hours ago</span>
-                            </div>
+                    @if (Model.RecentBookings.Any())
+                    {
+                        <div class="activity-list">
+                            @foreach (var b in Model.RecentBookings)
+                            {
+                                <div class="activity-item">
+                                    <div class="activity-icon @(b.Paid ? "green" : "orange")">@(b.Paid ? "✅" : "⏳")</div>
+                                    <div class="activity-content">
+                                        <p><strong>@b.PatientName</strong> booked with Dr. @b.DoctorName</p>
+                                        <p>@b.Amount.ToString("C") - @(b.Paid ? "Paid" : "Payment pending")</p>
+                                        <span class="activity-time">@b.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</span>
+                                    </div>
+                                </div>
+                            }
                         </div>
-                        <div class="activity-item">
-                            <div class="activity-icon green">✅</div>
-                            <div class="activity-content">
-                                <p><strong>Appointment Completed</strong></p>
-                                <p>John Doe's appointment with Dr. Sarah Johnson</p>
-                                <span class="activity-time">3 hours ago</span>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon orange">💰</div>
-                            <div class="activity-content">
-                                <p><strong>Payment Received</strong></p>
-                                <p>$250 payment from Jane Smith</p>
-                                <span class="activity-time">5 hours ago</span>
-                            </div>
-                        </div>
-                    </div>
+                    }
+                    else
+                    {
+                        <p class="empty-state">No bookings yet.</p>
+                    }
                 </div>
 
                 <!-- Quick Actions -->
                 <div class="content-section">
                     <h2>Quick Actions</h2>
                     <div class="admin-actions">
-                        <button class="admin-action-btn" onclick="showSection('doctor-creation-section')">
+                        <a class="admin-action-btn" asp-controller="Accounts" asp-action="CreateDoctor">
                             <span>➕</span><span>Add New Doctor</span>
-                        </button>
-                        <button class="admin-action-btn" onclick="showToast('Register Patient feature coming soon!', 'info')">
-                            <span>👥</span><span>Register Patient</span>
-                        </button>
-                        <button class="admin-action-btn" onclick="showToast('Schedule Appointment feature coming soon!', 'info')">
-                            <span>📅</span><span>Schedule Appointment</span>
-                        </button>
-                        <button class="admin-action-btn" onclick="showToast('Generate Report feature coming soon!', 'info')">
-                            <span>📊</span><span>Generate Report</span>
-                        </button>
+                        </a>
+                        <a class="admin-action-btn" asp-controller="ClinicBranches" asp-action="Index">
+                            <span>🏥</span><span>Manage Branches</span>
+                        </a>
+                        <a class="admin-action-btn" asp-controller="ScheduleManagement" asp-action="Index">
+                            <span>📅</span><span>Manage Schedules</span>
+                        </a>
+                        <a class="admin-action-btn" asp-controller="Dashboard" asp-action="AppointmentTable">
+                            <span>📊</span><span>Payments &amp; Appointments</span>
+                        </a>
                     </div>
                 </div>
             </div><!-- /#dashboard-section -->

@@ -22,8 +22,8 @@
 
     <nav class="sidebar-nav">
         <!-- DASHBOARD -->
-        <a asp-controller="Accounts" asp-action="Index"
-           class="nav-item @(isActive("Accounts", "Index"))">
+        <a asp-controller="Dashboard" asp-action="Index"
+           class="nav-item @(isActive("Dashboard", "Index"))">
             <span class="nav-icon">📊</span>
             <span>Dashboard</span>
         </a>
@@ -68,13 +68,6 @@
            class="nav-item @(isActive("Dashboard", "AppointmentTable"))">
             <span class="nav-icon">🏥</span>
             <span>Patient Appointment Table</span>
-        </a>
-
-        <!-- PATIENT Account -->
-        <a asp-controller="Dashboard" asp-action="AppointmentTable"
-           class="nav-item @(isActive("Dashboard", "AppointmentTable"))">
-            <span class="nav-icon">🏥</span>
-            <span>Patients</span>
         </a>
 
         <!-- CLINIC BRANCHES -->

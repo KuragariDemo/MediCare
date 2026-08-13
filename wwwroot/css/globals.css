@@ -20,3 +20,26 @@ button:focus-visible {
 a {
     text-decoration: none;
 }
+
+/* Shared flash-message banner (TempData Success/Error), used across
+   admin/doctor/patient pages. Previously referenced by several views
+   with no matching CSS anywhere in the project. */
+.alert-banner {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 0 0 16px;
+    font-weight: 500;
+    border: 1px solid transparent;
+}
+
+.alert-success {
+    background: #e6fff4;
+    color: #0a8a5f;
+    border-color: #b7f5dc;
+}
+
+.alert-error {
+    background: #fff1f2;
+    color: #be123c;
+    border-color: #fecdd3;
+}

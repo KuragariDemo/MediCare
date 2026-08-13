@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Runtime.InteropServices;
@@ -22,6 +23,39 @@ namespace MediCare.App.Controllers
         public AppointmentController(MediCareContext db)
         {
             _db = db;
+        }
+
+        private static readonly TimeZoneInfo ClinicTz = TimeZoneInfo.FindSystemTimeZoneById(
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "SE Asia Standard Time" : "Asia/Bangkok");
+
+        private bool WantsJson() =>
+            Request.Headers["Accept"].ToString().Contains("application/json", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
+
+        public record SlotInfo(string Date, string Start, string End, string Branch, string Label);
+
+        private async Task<List<SlotInfo>> GetAvailableSlotsAsync(string doctorUserId)
+        {
+            var duties = await (
+                from a in _db.DutyAssignments.AsNoTracking()
+                join b in _db.ClinicBranches.AsNoTracking()
+                    on a.BranchId equals b.Id
+                where a.DoctorId == doctorUserId && a.EndUtc > DateTime.UtcNow
+                orderby a.StartUtc
+                select new { a.StartUtc, a.EndUtc, BranchName = b.Name }
+            ).ToListAsync();
+
+            return duties.Select(x =>
+            {
+                var startLocal = TimeZoneInfo.ConvertTimeFromUtc(x.StartUtc, ClinicTz);
+                var endLocal = TimeZoneInfo.ConvertTimeFromUtc(x.EndUtc, ClinicTz);
+                return new SlotInfo(
+                    Date: startLocal.ToString("yyyy-MM-dd"),
+                    Start: startLocal.ToString("HH:mm"),
+                    End: endLocal.ToString("HH:mm"),
+                    Branch: x.BranchName,
+                    Label: $"{startLocal:ddd, dd MMM yyyy} · {startLocal:HH:mm}-{endLocal:HH:mm} · {x.BranchName}");
+            }).ToList();
         }
 
         // =========================
@@ -54,8 +88,12 @@ namespace MediCare.App.Controllers
             var vm = new AppointmentBookVm
             {
                 DoctorId = doc.Id,
-                DoctorName = doctorName
+                DoctorName = doctorName,
+                ConsultationFee = await ResolveConsultationFeeAsync(doctorId),
             };
+            vm.TotalAmount = vm.ConsultationFee;
+
+            ViewBag.AvailableSlots = await GetAvailableSlotsAsync(doc.UserId);
 
             return View("~/Views/Appointment/Book.cshtml", vm);
         }
@@ -73,31 +111,13 @@ namespace MediCare.App.Controllers
 
             if (doc == null) return NotFound();
 
-            var tzId = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? "SE Asia Standard Time"
-                : "Asia/Bangkok";
-            var tz = TimeZoneInfo.FindSystemTimeZoneById(tzId);
-
-            var duties = await (
-                from a in _db.DutyAssignments.AsNoTracking()
-                join b in _db.ClinicBranches.AsNoTracking()
-                    on a.BranchId equals b.Id
-                where a.DoctorId == doc.UserId && a.EndUtc > DateTime.UtcNow
-                orderby a.StartUtc
-                select new { a.StartUtc, a.EndUtc, BranchName = b.Name }
-            ).ToListAsync();
-
-            var data = duties.Select(x =>
+            var slots = await GetAvailableSlotsAsync(doc.UserId);
+            var data = slots.Select(s => new
             {
-                var startLocal = TimeZoneInfo.ConvertTimeFromUtc(x.StartUtc, tz);
-                var endLocal = TimeZoneInfo.ConvertTimeFromUtc(x.EndUtc, tz);
-                return new
-                {
-                    date = startLocal.ToString("yyyy-MM-dd"),
-                    start = startLocal.ToString("HH:mm"),
-                    end = endLocal.ToString("HH:mm"),
-                    branch = x.BranchName
-                };
+                date = s.Date,
+                start = s.Start,
+                end = s.End,
+                branch = s.Branch
             });
 
             return Json(data);
@@ -120,34 +140,31 @@ namespace MediCare.App.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AppointmentBookVm vm)
         {
-            if (!ModelState.IsValid)
-            {
-                if (Request.Headers["Accept"].ToString().Contains("application/json", StringComparison.OrdinalIgnoreCase))
-                    return BadRequest(new { ok = false, error = "Invalid form data." });
-
-                return View("~/Views/Appointment/Book.cshtml", vm);
-            }
-
             // Find doctor for mapping
             var doc = await _db.Doctors
                 .AsNoTracking()
                 .Select(d => new { d.Id, d.UserId })
                 .FirstOrDefaultAsync(d => d.Id == vm.DoctorId);
 
+            if (!ModelState.IsValid)
+            {
+                if (WantsJson())
+                    return BadRequest(new { ok = false, error = "Invalid form data." });
+
+                if (doc != null)
+                    ViewBag.AvailableSlots = await GetAvailableSlotsAsync(doc.UserId);
+
+                return View("~/Views/Appointment/Book.cshtml", vm);
+            }
+
             if (doc == null)
                 return NotFound(new { ok = false, error = "Doctor not found." });
-
-            // Timezone
-            var tzId = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? "SE Asia Standard Time"
-                : "Asia/Bangkok";
-            var tz = TimeZoneInfo.FindSystemTimeZoneById(tzId);
 
             // Convert to UTC
             var startLocal = vm.DutyDate.Date + vm.StartTime;
             var endLocal = vm.DutyDate.Date + vm.EndTime;
-            var startUtc = TimeZoneInfo.ConvertTimeToUtc(startLocal, tz);
-            var endUtc = TimeZoneInfo.ConvertTimeToUtc(endLocal, tz);
+            var startUtc = TimeZoneInfo.ConvertTimeToUtc(startLocal, ClinicTz);
+            var endUtc = TimeZoneInfo.ConvertTimeToUtc(endLocal, ClinicTz);
 
             // Check slot
             var slotExists = await (
@@ -162,6 +179,16 @@ namespace MediCare.App.Controllers
 
             if (!slotExists)
                 return Conflict(new { ok = false, error = "Selected slot is no longer available." });
+
+            // Prevent double-booking: reject if another appointment already holds this exact slot.
+            var alreadyBooked = await _db.Appointments.AnyAsync(a =>
+                a.DoctorId == vm.DoctorId &&
+                a.DutyDate == vm.DutyDate.Date &&
+                a.StartTime == vm.StartTime &&
+                a.EndTime == vm.EndTime);
+
+            if (alreadyBooked)
+                return Conflict(new { ok = false, error = "This time slot was just booked by someone else. Please choose another slot." });
 
             // ====== Fee ======
             var fee = await ResolveConsultationFeeAsync(vm.DoctorId);
@@ -215,10 +242,29 @@ namespace MediCare.App.Controllers
             };
 
             _db.Appointments.Add(entity);
-            await _db.SaveChangesAsync();
+
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Race condition: two requests passed the checks above at the same time.
+                var stillThere = await _db.Appointments.AnyAsync(a =>
+                    a.DoctorId == vm.DoctorId &&
+                    a.DutyDate == vm.DutyDate.Date &&
+                    a.StartTime == vm.StartTime &&
+                    a.EndTime == vm.EndTime &&
+                    a.Id != entity.Id);
+
+                if (stillThere)
+                    return Conflict(new { ok = false, error = "This time slot was just booked by someone else. Please choose another slot." });
+
+                throw;
+            }
 
             // ====== Response ======
-            if (Request.Headers["Accept"].ToString().Contains("application/json", StringComparison.OrdinalIgnoreCase))
+            if (WantsJson())
                 return Json(new { ok = true, id = entity.Id });
 
             TempData["Success"] = status == PaymentStatus.Paid
@@ -236,11 +282,18 @@ namespace MediCare.App.Controllers
         {
             var a = await _db.Appointments
                 .AsNoTracking()
+                .Include(x => x.Doctor)
+                    .ThenInclude(d => d.User)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (a == null) return NotFound();
 
-            // You can reuse Index.cshtml’s layout to show confirmation summary
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isOwner = !string.IsNullOrEmpty(userId) && a.PatientId == userId;
+            var isStaff = User.IsInRole("Admin") || User.IsInRole("AdminPlus") || User.IsInRole("Doctor");
+            if (!isOwner && !isStaff)
+                return Forbid();
+
             return View("~/Views/Appointment/Confirmation.cshtml", a);
         }
 
@@ -288,7 +341,7 @@ namespace MediCare.App.Controllers
             await _db.SaveChangesAsync();
 
             // Return JSON (for AJAX)
-            if (Request.Headers["Accept"].ToString().Contains("application/json", StringComparison.OrdinalIgnoreCase))
+            if (WantsJson())
                 return Json(new { ok = true });
 
             TempData["Success"] = "Payment recorded successfully.";

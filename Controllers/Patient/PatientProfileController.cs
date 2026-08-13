@@ -4,8 +4,11 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using MediCare.App.Data;
 using MediCare.App.Models;
+using MediCare.App.Services;
 using MediCare.App.ViewModels.Patient;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,16 +16,20 @@ using PatientModel = MediCare.App.Models.Patient;
 
 namespace MediCare.App.Controllers.Patients
 {
-    [Authorize] // keep auth
+    [Authorize(Roles = "Patient")]
     public class PatientProfileController : Controller
     {
         private readonly MediCareContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IWebHostEnvironment _env;
 
-        public PatientProfileController(MediCareContext db, UserManager<ApplicationUser> userManager)
+        public PatientProfileController(MediCareContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IWebHostEnvironment env)
         {
             _db = db;
             _userManager = userManager;
+            _signInManager = signInManager;
+            _env = env;
         }
 
         private string GetMyUserId()
@@ -101,6 +108,7 @@ namespace MediCare.App.Controllers.Patients
                 Gender = patient.Gender,
                 DisplayName = displayName,
                 Initials = initials,
+                AvatarUrl = AvatarStorage.GetAvatarUrl(_env, myUserId),
                 StatusMessage = null
             };
 
@@ -179,6 +187,53 @@ namespace MediCare.App.Controllers.Patients
             return View("~/Views/Patient/PatientProfile.cshtml", form);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadAvatar(IFormFile avatarFile)
+        {
+            var myUserId = GetMyUserId();
 
+            var (ok, error) = AvatarStorage.Validate(avatarFile);
+            if (!ok)
+            {
+                TempData["Error"] = error;
+                return RedirectToAction(nameof(Index));
+            }
+
+            await AvatarStorage.SaveAsync(_env, myUserId, avatarFile);
+            TempData["Success"] = "Profile picture updated.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
+        {
+            var myUserId = GetMyUserId();
+            var appUser = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == myUserId);
+            if (appUser == null) return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
+            {
+                TempData["Error"] = "Please fill in all password fields.";
+                return RedirectToAction(nameof(Index));
+            }
+            if (newPassword != confirmPassword)
+            {
+                TempData["Error"] = "New password and confirmation do not match.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var result = await _userManager.ChangePasswordAsync(appUser, currentPassword, newPassword);
+            if (!result.Succeeded)
+            {
+                TempData["Error"] = string.Join("; ", result.Errors.Select(e => e.Description));
+                return RedirectToAction(nameof(Index));
+            }
+
+            await _signInManager.RefreshSignInAsync(appUser);
+            TempData["Success"] = "Password changed successfully.";
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

@@ -41,6 +41,15 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CanCreateAccounts", p => p.RequireRole("AdminPlus"));
 });
 
+// Several AJAX views send the antiforgery token via a "RequestVerificationToken" header
+// (see Views/Admin/DoctorSpecialties.cshtml, Views/Patient/MyAppointments.cshtml, etc.).
+// Without this, [ValidateAntiForgeryToken] only looks at a form field and those header-only
+// requests are rejected.
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "RequestVerificationToken";
+});
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 
@@ -116,8 +125,24 @@ using (var scope = app.Services.CreateScope())
             }
         }
 
-        // Seed root AdminPlus
-        var rootEmail = "root.adminplus@medicare.local";
+        // Seed root AdminPlus. Credentials come from configuration (appsettings / environment
+        // variables / user-secrets) rather than being hardcoded, so no real password lives in
+        // source control. In Development a fallback is used for convenience only.
+        var rootEmail = builder.Configuration["Seed:RootAdmin:Email"] ?? "root.adminplus@medicare.local";
+        var rootPassword = builder.Configuration["Seed:RootAdmin:Password"];
+        if (string.IsNullOrWhiteSpace(rootPassword))
+        {
+            if (app.Environment.IsDevelopment())
+            {
+                rootPassword = "Root@12345";
+                logger.LogWarning("Seed:RootAdmin:Password not configured; using the Development-only default. Set it via appsettings, an environment variable, or user-secrets for anything beyond local dev.");
+            }
+            else
+            {
+                throw new InvalidOperationException("Seed:RootAdmin:Password must be set via configuration (environment variable MediCare__Seed__RootAdmin__Password, appsettings, or a secret store) before the app can seed the root admin account.");
+            }
+        }
+
         var root = await userMgr.FindByEmailAsync(rootEmail);
         if (root == null)
         {
@@ -129,7 +154,7 @@ using (var scope = app.Services.CreateScope())
                 EmailConfirmed = true
             };
 
-            var created = await userMgr.CreateAsync(root, "Root@12345");
+            var created = await userMgr.CreateAsync(root, rootPassword);
             if (!created.Succeeded)
                 throw new InvalidOperationException("Failed to create root admin: " + string.Join(", ", created.Errors.Select(e => e.Description)));
 

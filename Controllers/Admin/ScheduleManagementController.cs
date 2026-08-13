@@ -140,6 +140,7 @@ namespace MediCare.App.Controllers.Admin
         public record AssignDutyDto(string DoctorId, int BranchId, DateTime Date, string StartTime, string EndTime);
 
         [HttpPost("Assign")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Assign([FromBody] AssignDutyDto dto, CancellationToken ct)
         {
             if (!TimeOnly.TryParse(dto.StartTime, out var st) || !TimeOnly.TryParse(dto.EndTime, out var et))
@@ -222,6 +223,7 @@ namespace MediCare.App.Controllers.Admin
 
         // ---------- Approve / Decline ----------
         [HttpPost("BlockRequests/{id}/approve")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApproveBlock(int id, CancellationToken ct)
         {
             var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "system";
@@ -230,6 +232,7 @@ namespace MediCare.App.Controllers.Admin
         }
 
         [HttpPost("BlockRequests/{id}/decline")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeclineBlock(int id, CancellationToken ct)
         {
             var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "system";
@@ -284,6 +287,7 @@ namespace MediCare.App.Controllers.Admin
         public record EditAssignmentDto(string DoctorId, int BranchId, DateTime StartLocal, DateTime EndLocal);
 
         [HttpPut("Assignments/{id}")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateAssignment(int id, [FromBody] EditAssignmentDto dto, CancellationToken ct)
         {
             var (ok, error) = await _svc.UpdateAssignmentAsync(id, dto.DoctorId, dto.BranchId, dto.StartLocal, dto.EndLocal, TZ, ct);
@@ -292,6 +296,7 @@ namespace MediCare.App.Controllers.Admin
 
         // ---------- Delete assignment ----------
         [HttpDelete("Assignments/{id}")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAssignment(int id, CancellationToken ct)
         {
             var (ok, error) = await _svc.DeleteAssignmentAsync(id, ct);

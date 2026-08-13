@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using MediCare.App.Data;
 using MediCare.App.Models;
+using MediCare.App.ViewModels.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +18,9 @@ namespace MediCare.App.Controllers.Admin
     {
         private readonly MediCareContext _db;
 
+        private static readonly TimeZoneInfo TZ = TimeZoneInfo.FindSystemTimeZoneById(
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "SE Asia Standard Time" : "Asia/Bangkok");
+
         public DashboardController(MediCareContext db)
         {
             _db = db;
@@ -24,9 +29,63 @@ namespace MediCare.App.Controllers.Admin
         // GET: /Admin/Dashboard  OR /Admin/Dashboard/Index
         [HttpGet("")]
         [HttpGet("Index")]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View("~/Views/Admin/Dashboard.cshtml");
+            var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TZ);
+            var today = nowLocal.Date;
+            var monthStartUtc = new DateTime(nowLocal.Year, nowLocal.Month, 1, 0, 0, 0, DateTimeKind.Unspecified);
+            monthStartUtc = TimeZoneInfo.ConvertTimeToUtc(monthStartUtc, TZ);
+
+            var vm = new AdminDashboardVM
+            {
+                TotalDoctors = await _db.Doctors.CountAsync(),
+                TotalPatients = await _db.Patients.CountAsync(),
+            };
+
+            var appts = await _db.Appointments
+                .AsNoTracking()
+                .Include(a => a.Doctor).ThenInclude(d => d.Specialty)
+                .Include(a => a.Doctor).ThenInclude(d => d.User)
+                .ToListAsync();
+
+            vm.TodayAppointments = appts.Count(a => a.DutyDate.Date == today);
+            vm.TodayPendingPayments = appts.Count(a => a.DutyDate.Date == today && a.PaymentStatus == PaymentStatus.Pending);
+            vm.RevenueThisMonth = appts
+                .Where(a => a.PaymentStatus == PaymentStatus.Paid && a.CreatedAt >= monthStartUtc)
+                .Sum(a => a.TotalAmount);
+
+            vm.Last7Days = Enumerable.Range(0, 7)
+                .Select(i => today.AddDays(-6 + i))
+                .Select(d => new DayCount { Date = d, Count = appts.Count(a => a.DutyDate.Date == d) })
+                .ToList();
+
+            var total = appts.Count;
+            vm.DepartmentShares = appts
+                .GroupBy(a => a.Doctor?.Specialty?.Name ?? a.Doctor?.Speciality ?? "Other")
+                .Select(g => new DeptShare
+                {
+                    Name = g.Key,
+                    Count = g.Count(),
+                    Percent = total == 0 ? 0 : (int)Math.Round(g.Count() * 100.0 / total)
+                })
+                .OrderByDescending(d => d.Count)
+                .Take(4)
+                .ToList();
+
+            vm.RecentBookings = appts
+                .OrderByDescending(a => a.CreatedAt)
+                .Take(5)
+                .Select(a => new RecentBooking
+                {
+                    PatientName = a.PatientName,
+                    DoctorName = a.Doctor?.User?.FullName ?? a.Doctor?.User?.UserName ?? "Doctor",
+                    CreatedAt = a.CreatedAt,
+                    Amount = a.TotalAmount,
+                    Paid = a.PaymentStatus == PaymentStatus.Paid
+                })
+                .ToList();
+
+            return View("~/Views/Admin/Dashboard.cshtml", vm);
         }
 
         // GET: /Admin/Dashboard/AppointmentTable

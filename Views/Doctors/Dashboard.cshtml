@@ -1,7 +1,6 @@
-﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Identity
 @using MediCare.App.Models
-@* @inject UserManager<ApplicationUser> UserManager  // optional, not needed if using ViewBag *@
-
+@model MediCare.App.ViewModels.Doctor.DoctorDashboardVM
 @{
     Layout = "_DoctorLayout";
     ViewData["Title"] = "Doctor Dashboard";
@@ -10,277 +9,148 @@
     var doctorRole = ViewBag.Speciality as string ?? "Specialist";
 }
 
-<body>
-    <div class="dashboard-container">
-        <!-- Sidebar partial -->
-        <partial name="_DoctorSidebar" />
+<div class="dashboard-container">
+    <!-- Sidebar partial -->
+    <partial name="_DoctorSidebar" />
 
-        <!-- Main Content -->
-        <main class="dashboard-main">
-            <!-- Header -->
-            <header class="dashboard-header">
-                <div class="header-left">
-                    <h1>Welcome, @doctorName!</h1>
-                    <p>Here's your schedule and patient updates for today</p>
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Welcome, @doctorName!</h1>
+                <p>Here's your schedule and patient updates for today</p>
+            </div>
+            <div class="header-right">
+                <div class="user-profile">
+                    <div class="user-avatar">👨‍⚕️</div>
+                    <div class="user-info">
+                        <p class="user-name">@doctorName</p>
+                        <p class="user-role">@doctorRole</p>
+                    </div>
                 </div>
-                <div class="header-right">
-                    <button class="notification-btn" title="Notifications">
-                        <span>🔔</span>
-                        <span class="notification-badge">5</span>
-                    </button>
-                    <div class="user-profile">
-                        <div class="user-avatar">👨‍⚕️</div>
-                        <div class="user-info">
-                            <p class="user-name">@doctorName</p>
-                            <p class="user-role">@doctorRole</p>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <section id="home-section">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">📅</div>
+                        <div class="stat-info">
+                            <h3>@Model.TodayCount</h3>
+                            <p>Today's Appointments</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">✅</div>
+                        <div class="stat-info">
+                            <h3>@Model.TodayCompletedCount</h3>
+                            <p>Completed Today</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">⏳</div>
+                        <div class="stat-info">
+                            <h3>@Model.TodayUpcomingCount</h3>
+                            <p>Remaining Today</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple">👥</div>
+                        <div class="stat-info">
+                            <h3>@Model.TotalPatientsCount</h3>
+                            <p>Total Patients</p>
                         </div>
                     </div>
                 </div>
-            </header>
 
-            <!-- Dashboard Content -->
-            <div class="dashboard-content">
-                <!-- Home Section -->
-                <section id="home-section">
-                    <!-- Stats Cards -->
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-icon blue">📅</div>
-                            <div class="stat-info">
-                                <h3>12</h3>
-                                <p>Today's Appointments</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon green">✅</div>
-                            <div class="stat-info">
-                                <h3>8</h3>
-                                <p>Completed</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon orange">⏳</div>
-                            <div class="stat-info">
-                                <h3>4</h3>
-                                <p>Pending</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon purple">👥</div>
-                            <div class="stat-info">
-                                <h3>156</h3>
-                                <p>Total Patients</p>
-                            </div>
-                        </div>
+                <!-- Today's Schedule -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Today's Schedule</h2>
+                        <a class="btn-primary" asp-controller="DoctorSchedule" asp-action="Index">View Full Calendar</a>
                     </div>
-
-                    <!-- Today's Schedule -->
-                    <div class="content-section">
-                        <div class="section-header">
-                            <h2>Today's Schedule</h2>
-                            <button class="btn-primary" onclick="showSection('schedule-section')">View Full Calendar</button>
-                        </div>
+                    @if (Model.TodaySchedule.Any())
+                    {
                         <div class="schedule-timeline">
-                            <div class="timeline-item">
-                                <div class="timeline-time">09:00 AM</div>
-                                <div class="timeline-content">
-                                    <h4>John Doe</h4>
-                                    <p>Regular Checkup - Cardiology</p>
-                                    <span class="status-badge confirmed">Confirmed</span>
+                            @foreach (var item in Model.TodaySchedule)
+                            {
+                                <div class="timeline-item @(item.IsInProgress ? "active" : "")">
+                                    <div class="timeline-time">@item.StartTime.ToString(@"hh\:mm")</div>
+                                    <div class="timeline-content">
+                                        <h4>@item.PatientName</h4>
+                                        <p>@(string.IsNullOrWhiteSpace(item.ReasonNote) ? "No reason provided" : item.ReasonNote)</p>
+                                        @if (item.IsCompleted)
+                                        {
+                                            <span class="status-badge stable">Completed</span>
+                                        }
+                                        else if (item.IsInProgress)
+                                        {
+                                            <span class="status-badge in-progress">In Progress</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge pending">Upcoming</span>
+                                        }
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-time">10:30 AM</div>
-                                <div class="timeline-content">
-                                    <h4>Jane Smith</h4>
-                                    <p>Follow-up Consultation</p>
-                                    <span class="status-badge confirmed">Confirmed</span>
-                                </div>
-                            </div>
-                            <div class="timeline-item active">
-                                <div class="timeline-time">11:00 AM</div>
-                                <div class="timeline-content">
-                                    <h4>Mike Johnson</h4>
-                                    <p>ECG Test Review</p>
-                                    <span class="status-badge in-progress">In Progress</span>
-                                </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-time">02:00 PM</div>
-                                <div class="timeline-content">
-                                    <h4>Sarah Williams</h4>
-                                    <p>New Patient Consultation</p>
-                                    <span class="status-badge pending">Pending</span>
-                                </div>
-                            </div>
+                            }
                         </div>
-                    </div>
+                    }
+                    else
+                    {
+                        <p class="empty-state">No appointments scheduled for today.</p>
+                    }
+                </div>
 
-                    <!-- Recent Patients -->
-                    <div class="content-section">
-                        <div class="section-header">
-                            <h2>Recent Patients</h2>
-                            <button class="btn-secondary" onclick="showSection('patients-section')">View All</button>
-                        </div>
+                <!-- Recent Patients -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Recent Patients</h2>
+                        <a class="btn-secondary" asp-controller="DoctorPatients" asp-action="Records">View All</a>
+                    </div>
+                    @if (Model.RecentPatients.Any())
+                    {
                         <div class="table-container">
                             <table class="data-table">
                                 <thead>
                                     <tr>
                                         <th>Patient Name</th>
                                         <th>Last Visit</th>
-                                        <th>Condition</th>
-                                        <th>Status</th>
+                                        <th>Reason for Visit</th>
+                                        <th>Payment</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="patient-cell">
-                                                <div class="patient-avatar">JD</div>
-                                                <span>John Doe</span>
-                                            </div>
-                                        </td>
-                                        <td>Dec 15, 2024</td>
-                                        <td>Hypertension</td>
-                                        <td><span class="status-badge stable">Stable</span></td>
-                                        <td><a class="action-btn" asp-controller="Patients" asp-action="Details" asp-route-id="1">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="patient-cell">
-                                                <div class="patient-avatar">JS</div>
-                                                <span>Jane Smith</span>
-                                            </div>
-                                        </td>
-                                        <td>Dec 14, 2024</td>
-                                        <td>Diabetes</td>
-                                        <td><span class="status-badge monitoring">Monitoring</span></td>
-                                        <td><a class="action-btn" asp-controller="Patients" asp-action="Details" asp-route-id="2">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="patient-cell">
-                                                <div class="patient-avatar">MJ</div>
-                                                <span>Mike Johnson</span>
-                                            </div>
-                                        </td>
-                                        <td>Dec 13, 2024</td>
-                                        <td>Heart Disease</td>
-                                        <td><span class="status-badge critical">Critical</span></td>
-                                        <td><a class="action-btn" asp-controller="Patients" asp-action="Details" asp-route-id="3">View</a></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Full Schedule Section -->
-                <section id="schedule-section" class="hidden">
-                    <div class="content-section">
-                        <div class="section-header">
-                            <h2>Full Calendar</h2>
-                            <div class="section-actions">
-                                <button class="btn-secondary" onclick="showSection('home-section')">Back to Home</button>
-                                <a class="btn-primary" asp-controller="Schedule" asp-action="Index">Open in Calendar</a>
-                            </div>
-                        </div>
-
-                        <div class="calendar-grid">
-                            <div class="calendar-toolbar">
-                                <button class="btn-icon" title="Prev">◀</button>
-                                <div class="calendar-month">October 2025</div>
-                                <button class="btn-icon" title="Next">▶</button>
-                            </div>
-                            <div class="calendar-legend">
-                                <span><i class="legend-dot confirmed"></i> Confirmed</span>
-                                <span><i class="legend-dot pending"></i> Pending</span>
-                                <span><i class="legend-dot in-progress"></i> In Progress</span>
-                            </div>
-                            <div class="calendar-body">
-                                @for (int i = 1; i <= 30; i++)
-                                {
-                                    <div class="calendar-cell">
-                                        <div class="cell-date">@i</div>
-                                        @if (i == 3 || i == 10 || i == 21)
-                                        {
-                                            <div class="cell-event confirmed">3 appts</div>
-                                        }
-                                        @if (i == 5)
-                                        {
-                                            <div class="cell-event pending">2 pending</div>
-                                        }
-                                        @if (i == 14)
-                                        {
-                                            <div class="cell-event in-progress">in-progress</div>
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Patients Section -->
-                <section id="patients-section" class="hidden">
-                    <div class="content-section">
-                        <div class="section-header">
-                            <h2>All Patients</h2>
-                            <div class="section-actions">
-                                <input type="search" class="form-input" placeholder="Search patient..." />
-                                <button class="btn-secondary" onclick="showSection('home-section')">Back to Home</button>
-                            </div>
-                        </div>
-
-                        <div class="table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Patient</th>
-                                        <th>Last Visit</th>
-                                        <th>Primary Condition</th>
-                                        <th>Status</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @for (int i = 1; i <= 12; i++)
+                                    @foreach (var p in Model.RecentPatients)
                                     {
                                         <tr>
                                             <td>
                                                 <div class="patient-cell">
-                                                    <div class="patient-avatar">@("P" + i)</div>
-                                                    <span>@($"Patient {i}")</span>
+                                                    <div class="patient-avatar">@(p.PatientName.Length > 0 ? p.PatientName.Substring(0, 1).ToUpper() : "P")</div>
+                                                    <span>@p.PatientName</span>
                                                 </div>
                                             </td>
-                                            <td>@DateTime.UtcNow.AddDays(-i).ToString("MMM dd, yyyy")</td>
-                                            <td>@(i % 3 == 0 ? "Hypertension" : i % 3 == 1 ? "Diabetes" : "Arrhythmia")</td>
-                                            <td>
-                                                <span class="status-badge @(i % 3 == 0 ? "stable" : i % 3 == 1 ? "monitoring" : "critical")">
-                                                    @(i % 3 == 0 ? "Stable" : i % 3 == 1 ? "Monitoring" : "Critical")
-                                                </span>
-                                            </td>
-                                            <td><a class="action-btn" asp-controller="Patients" asp-action="Details" asp-route-id="@i">View</a></td>
+                                            <td>@p.LastVisit.ToString("MMM dd, yyyy")</td>
+                                            <td>@(string.IsNullOrWhiteSpace(p.ReasonNote) ? "—" : p.ReasonNote)</td>
+                                            <td><span class="status-badge @(p.Paid ? "stable" : "pending")">@(p.Paid ? "Paid" : "Unpaid")</span></td>
+                                            <td><a class="action-btn" asp-controller="DoctorPatients" asp-action="Records">View</a></td>
                                         </tr>
                                     }
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                </section>
-            </div>
-        </main>
-    </div>
-
-    <script>
-        // Simple section switcher (expects sections with ids ending in "-section")
-        function showSection(id) {
-          document.querySelectorAll('.dashboard-content section').forEach(s => s.classList.add('hidden'));
-          const el = document.getElementById(id);
-          if (el) el.classList.remove('hidden');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    </script>
-</body>
-</html>
+                    }
+                    else
+                    {
+                        <p class="empty-state">No patients yet.</p>
+                    }
+                </div>
+            </section>
+        </div>
+    </main>
+</div>

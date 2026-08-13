@@ -1,0 +1,84 @@
+@model MediCare.App.Models.Appointment
+@{
+    ViewData["Title"] = "Booking Confirmed - ForestView Hospital";
+    Layout = "_Layout";
+
+    var doctorName = Model.Doctor?.User?.FullName
+        ?? Model.Doctor?.User?.UserName
+        ?? "your doctor";
+    var isPaid = Model.PaymentStatus == MediCare.App.Models.PaymentStatus.Paid;
+}
+
+<section class="container">
+    <style>
+        :root {
+            --teal: #00A8A8;
+            --ink: #0a4d68;
+            --muted: #6b7280;
+            --bg: #f7fafc;
+            --card: #ffffff;
+            --border: #e5e7eb;
+        }
+
+        body { background: var(--bg); font-family: Roboto, system-ui, Segoe UI, Arial, sans-serif; }
+        .container { max-width: 720px; margin: 40px auto; padding: 16px; }
+
+        .confirm-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 20px rgba(0,0,0,.05);
+        }
+
+        .confirm-icon {
+            width: 64px; height: 64px; border-radius: 50%;
+            background: #e6fffb; color: var(--teal);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; margin: 0 auto 16px;
+        }
+
+        .confirm-card h1 { text-align: center; color: var(--ink); margin: 0 0 4px; }
+        .confirm-sub { text-align: center; color: var(--muted); margin: 0 0 24px; }
+
+        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .row:last-of-type { border-bottom: none; }
+        .kicker { color: var(--muted); font-size: .9rem; }
+        .value { color: var(--ink); font-weight: 600; }
+
+        .status-pill { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: .85rem; font-weight: 600; }
+        .status-paid { background: #e6fff4; color: #0a8a5f; }
+        .status-pending { background: #fff7e6; color: #b8860b; }
+
+        .actions { display: flex; gap: 12px; margin-top: 28px; }
+        .btn-primary, .btn-secondary {
+            flex: 1; padding: 12px 18px; border-radius: 10px; border: none;
+            font-weight: 600; cursor: pointer; text-align: center; text-decoration: none;
+        }
+        .btn-primary { background: var(--teal); color: #fff; }
+        .btn-secondary { background: #fff; color: var(--ink); border: 1px solid var(--border); }
+    </style>
+
+    <div class="confirm-card">
+        <div class="confirm-icon">✓</div>
+        <h1>Booking Confirmed</h1>
+        <p class="confirm-sub">Appointment #@Model.Id has been reserved with Dr. @doctorName.</p>
+
+        <div class="row"><span class="kicker">Doctor</span><span class="value">Dr. @doctorName</span></div>
+        <div class="row"><span class="kicker">Branch</span><span class="value">@Model.Branch</span></div>
+        <div class="row"><span class="kicker">Date</span><span class="value">@Model.DutyDate.ToString("dd MMM yyyy")</span></div>
+        <div class="row"><span class="kicker">Time</span><span class="value">@Model.StartTime.ToString(@"hh\:mm") - @Model.EndTime.ToString(@"hh\:mm")</span></div>
+        <div class="row"><span class="kicker">Consultation Fee</span><span class="value">@Model.TotalAmount.ToString("C")</span></div>
+        <div class="row">
+            <span class="kicker">Payment</span>
+            <span class="status-pill @(isPaid ? "status-paid" : "status-pending")">
+                @(isPaid ? "Paid" : "Pay at clinic")
+            </span>
+        </div>
+
+        <div class="actions">
+            <a class="btn-secondary" asp-controller="PatientAppointments" asp-action="My">View My Appointments</a>
+            <a class="btn-primary" asp-controller="Home" asp-action="Index">Back to Home</a>
+        </div>
+    </div>
+</section>

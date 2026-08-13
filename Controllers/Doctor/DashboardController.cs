@@ -1,6 +1,13 @@
-﻿using MediCare.App.Data;
+﻿using System;
+using System.Linq;
+using System.Runtime.InteropServices;
+using MediCare.App.Data;
 using MediCare.App.Models;
+using MediCare.App.Services;
+using MediCare.App.ViewModels.Doctor;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -15,12 +22,18 @@ namespace MediCare.App.Controllers.Doctor
         private readonly MediCareContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IWebHostEnvironment _env;
+
+        private static readonly TimeZoneInfo TZ = TimeZoneInfo.FindSystemTimeZoneById(
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "SE Asia Standard Time" : "Asia/Bangkok");
 
         public DashboardController(
             MediCareContext db,
             UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
+            SignInManager<ApplicationUser> signInManager,
+            IWebHostEnvironment env)
         {
+            _env = env;
             _db = db;
             _userManager = userManager;
             _signInManager = signInManager;
@@ -40,7 +53,60 @@ namespace MediCare.App.Controllers.Doctor
 
             ViewBag.DoctorName = doctor?.User.FullName ?? user.FullName ?? user.UserName ?? "Doctor";
             ViewBag.Speciality = doctor?.Specialty?.Name ?? doctor?.Speciality ?? "N/A"; // display
-            return View("~/Views/Doctors/Dashboard.cshtml");
+
+            var vm = new DoctorDashboardVM();
+
+            if (doctor != null)
+            {
+                var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TZ);
+                var today = nowLocal.Date;
+
+                var appts = await _db.Appointments
+                    .AsNoTracking()
+                    .Where(a => a.DoctorId == doctor.Id)
+                    .ToListAsync();
+
+                var todays = appts.Where(a => a.DutyDate.Date == today)
+                    .OrderBy(a => a.StartTime)
+                    .ToList();
+
+                vm.TodaySchedule = todays.Select(a =>
+                {
+                    var endsAt = today + a.EndTime;
+                    var startsAt = today + a.StartTime;
+                    return new TodayAppointmentVM
+                    {
+                        AppointmentId = a.Id,
+                        PatientName = a.PatientName,
+                        ReasonNote = a.ReasonNote,
+                        StartTime = a.StartTime,
+                        EndTime = a.EndTime,
+                        IsCompleted = endsAt < nowLocal,
+                        IsInProgress = startsAt <= nowLocal && nowLocal <= endsAt
+                    };
+                }).ToList();
+
+                vm.TodayCount = todays.Count;
+                vm.TodayCompletedCount = vm.TodaySchedule.Count(a => a.IsCompleted);
+                vm.TodayUpcomingCount = vm.TodayCount - vm.TodayCompletedCount;
+                vm.TotalPatientsCount = appts.Select(a => a.PatientId).Distinct().Count();
+
+                vm.RecentPatients = appts
+                    .OrderByDescending(a => a.DutyDate).ThenByDescending(a => a.StartTime)
+                    .GroupBy(a => a.PatientId)
+                    .Select(g => g.First())
+                    .Take(5)
+                    .Select(a => new RecentPatientVM
+                    {
+                        PatientName = a.PatientName,
+                        LastVisit = a.DutyDate,
+                        ReasonNote = a.ReasonNote,
+                        Paid = a.PaymentStatus == PaymentStatus.Paid
+                    })
+                    .ToList();
+            }
+
+            return View("~/Views/Doctors/Dashboard.cshtml", vm);
         }
 
         // Doctors/Dashboard/Profile
@@ -74,6 +140,7 @@ namespace MediCare.App.Controllers.Doctor
                                 })
                                 .ToListAsync();
             ViewBag.Specialties = list;
+            ViewBag.AvatarUrl = AvatarStorage.GetAvatarUrl(_env, user.Id);
 
             return View("~/Views/Doctors/DoctorProfile.cshtml");
         }
@@ -84,6 +151,55 @@ namespace MediCare.App.Controllers.Doctor
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpPost("UploadAvatar")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadAvatar(IFormFile avatarFile)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var (ok, error) = AvatarStorage.Validate(avatarFile);
+            if (!ok)
+            {
+                TempData["Error"] = error;
+                return RedirectToRoute("DoctorDashboardProfile");
+            }
+
+            await AvatarStorage.SaveAsync(_env, user.Id, avatarFile);
+            TempData["Success"] = "Profile picture updated.";
+            return RedirectToRoute("DoctorDashboardProfile");
+        }
+
+        [HttpPost("ChangePassword")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
+            {
+                TempData["Error"] = "Please fill in all password fields.";
+                return RedirectToRoute("DoctorDashboardProfile");
+            }
+            if (newPassword != confirmPassword)
+            {
+                TempData["Error"] = "New password and confirmation do not match.";
+                return RedirectToRoute("DoctorDashboardProfile");
+            }
+
+            var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+            if (!result.Succeeded)
+            {
+                TempData["Error"] = string.Join("; ", result.Errors.Select(e => e.Description));
+                return RedirectToRoute("DoctorDashboardProfile");
+            }
+
+            await _signInManager.RefreshSignInAsync(user);
+            TempData["Success"] = "Password changed successfully.";
+            return RedirectToRoute("DoctorDashboardProfile");
         }
 
         [HttpPost("Profile/Update")]

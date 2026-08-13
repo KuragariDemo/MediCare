@@ -2,9 +2,8 @@
 @model MediCare.App.Areas.Identity.Pages.Account.RegisterModel
 @{
     ViewData["Title"] = "Register";
+    Layout = null;
 }
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -12,8 +11,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - ForestView Hospital</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="auth.css">
+    <link rel="stylesheet" href="~/css/globals.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -48,8 +48,7 @@
                         <p>Fill in your details to get started</p>
                     </div>
 
-                    <!-- Register.cshtml -->
-                    <form class="auth-form" method="post" asp-route-returnUrl="/Patient/Dashboard">
+                    <form class="auth-form" method="post" asp-route-returnUrl="@Model.ReturnUrl">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                         <div class="form-group">
@@ -95,7 +94,6 @@
                             <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
                         </div>
 
-                        <!-- Terms (optional, not bound) -->
                         <div class="form-options">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="terms" required>
@@ -105,7 +103,6 @@
 
                         <button type="submit" class="auth-submit-btn">
                             Create Account
-                            <!-- your SVG -->
                         </button>
 
                         <div class="auth-footer">
@@ -115,10 +112,6 @@
                             </p>
                         </div>
                     </form>
-
-                    @section Scripts {
-                        <partial name="_ValidationScriptsPartial" />
-                    }
 
                     <a asp-controller="Home" asp-action="Index" class="back-home">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -132,6 +125,8 @@
         </div>
     </div>
 
-    <script src="auth.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/auth.js" asp-append-version="true"></script>
 </body>
 </html>

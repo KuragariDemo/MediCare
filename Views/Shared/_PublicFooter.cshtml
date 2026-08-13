@@ -1,0 +1,47 @@
+<footer class="footer">
+    <div class="site-container">
+        <div class="footer-content">
+            <div class="footer-col">
+                <div class="footer-logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="#00A8A8" stroke-width="2" />
+                        <path d="M12 8V16M8 12H16" stroke="#00A8A8" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <span><strong>ForestView</strong><br />Hospital</span>
+                </div>
+                <p>Navigating Health Together: Your Trusted Medical Resource.</p>
+            </div>
+
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li><a asp-controller="About" asp-action="Index">About</a></li>
+                    <li><a asp-controller="Appointment" asp-action="Index">Find a Doctor</a></li>
+                    <li><a asp-controller="Contact" asp-action="Index">Contact</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>Department</h4>
+                <ul>
+                    <li><a asp-controller="Appointment" asp-action="Index">Cardiology</a></li>
+                    <li><a asp-controller="Appointment" asp-action="Index">Neurology</a></li>
+                    <li><a asp-controller="Appointment" asp-action="Index">Dentistry</a></li>
+                    <li><a asp-controller="Appointment" asp-action="Index">Pediatrics</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>Location</h4>
+                <p>10 Road Block-E, Banasree<br />Dhaka, Bangladesh</p>
+                <p>0181234567</p>
+                <a asp-controller="Branches" asp-action="Index" class="footer-branches-link">View All Branches →</a>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; @DateTime.UtcNow.Year ForestView Hospital. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
